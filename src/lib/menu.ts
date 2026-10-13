@@ -28,6 +28,7 @@ export const FEATURES: { href: string; label: string }[] = [
   { href: '/memo', label: '메모장' },
   { href: '/guest', label: '방명록' },
   { href: '/intro', label: '소개' },
+  { href: '/couple', label: '커플다이어리' },
 ];
 
 export const DEFAULT_MENU: MenuItem[] = [

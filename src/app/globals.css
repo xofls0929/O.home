@@ -1871,3 +1871,82 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .bcard.on .chev{transform:rotate(180deg)}
 .bcard-list{animation:bcardOpen .28s ease-out both;transform-origin:top}
 @keyframes bcardOpen{from{opacity:0;transform:translateY(-8px) scaleY(.96)}to{opacity:1;transform:none}}
+
+/* 커플다이어리 — 싸이월드 다이어리 느낌 (하늘 테두리 · 점선 · 스프링 · 주황 포인트) */
+.cy-frame{--cy-sky:#9fd2e6;--cy-line:#c9e4ef;--cy-blue:#1ba1d8;--cy-or:#f0861f;--cy-pink:#ff6f9c;--cy-ink:#4a4f57;
+  background:var(--cy-sky);border-radius:18px;padding:14px;box-shadow:inset 0 0 0 3px #fff;color:var(--cy-ink);
+  font-family:var(--font-body,inherit)}
+.cy-book{display:grid;grid-template-columns:200px 18px 1fr;border:2px dashed #fff;border-radius:12px;padding:10px;min-height:520px}
+.cy-side,.cy-main{background:#fff;border-radius:10px;border:1px solid var(--cy-line)}
+.cy-side{padding:16px 14px;display:flex;flex-direction:column;gap:4px}
+.cy-brand{font-weight:800;color:var(--cy-blue);letter-spacing:.06em;font-size:15px;margin:0 0 8px}
+.cy-fold{display:flex;align-items:center;gap:6px;background:none;border:0;padding:5px 4px;font:inherit;font-size:13px;color:var(--cy-ink);text-align:left;cursor:var(--cur-pointer,pointer);border-radius:6px}
+.cy-fold:hover{background:#f2f9fc}
+.cy-fold.on{font-weight:700;color:var(--cy-blue)}
+.cy-our{margin:14px 0 2px;padding-top:12px;border-top:1px solid var(--cy-line);font-size:16px;font-weight:700}
+.cy-who{font-size:14.5px}
+.cy-heart{font-size:15px}.cy-heart.a0{color:var(--cy-pink)}.cy-heart.a1{color:var(--cy-blue)}
+.cy-new{font-style:normal;font-size:9px;font-weight:800;color:#fff;background:var(--cy-or);border-radius:3px;padding:0 3px;margin-left:2px}
+.cy-side-foot{margin-top:auto;display:grid;gap:6px;padding-top:12px}
+.cy-mng{font:inherit;font-size:11.5px;color:var(--cy-ink);background:#fff;border:1px solid var(--cy-line);border-radius:999px;padding:6px 10px;cursor:var(--cur-pointer,pointer)}
+.cy-mng:hover{background:#f2f9fc}
+.cy-rings{display:flex;flex-direction:column;justify-content:center;gap:40px;align-items:center}
+.cy-rings i{width:22px;height:10px;border:3px solid #b9c4cc;border-radius:999px;background:#eef2f5}
+.cy-main{padding:12px 14px;display:flex;flex-direction:column;min-width:0}
+.cy-cal{display:grid;grid-template-columns:120px 1fr;border:1px solid var(--cy-line);border-radius:8px;padding:8px 6px}
+.cy-big{display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px dotted #c8ccd2}
+.cy-big b{font-size:32px;line-height:1;color:var(--cy-blue);font-weight:800;letter-spacing:-.02em}
+.cy-big span{font-size:13px;color:#9aa0a8;font-weight:700;margin-top:3px}
+.cy-days{padding:2px 6px 2px 10px;min-width:0}
+.cy-mon,.cy-row2{display:flex;align-items:center;flex-wrap:wrap;gap:1px}
+.cy-row2{border-top:1px dotted #d9dde2;margin-top:3px;padding-top:3px}
+.cy-mon>b{font-size:14px;font-weight:800;margin:0 4px;color:#555}
+.cy-mon>button:not(.cy-d){font-size:8px;width:16px;height:16px;border:1px solid #c8ccd2;background:#fff;border-radius:2px;color:#777;cursor:var(--cur-pointer,pointer);padding:0}
+.cy-d{width:24px;height:24px;border:0;background:none;font:inherit;font-size:12px;color:#a6abb2;border-radius:50%;cursor:var(--cur-pointer,pointer);padding:0}
+.cy-d.sun{color:#e5848a}
+.cy-d.has{color:var(--cy-or);font-weight:800}
+.cy-d.today{color:#333;font-weight:800}
+.cy-d.on{background:#8fcbe2;color:#fff;font-weight:800}
+.cy-d:hover:not(.on){background:#eef7fb}
+.cy-notice{display:flex;justify-content:space-between;gap:10px;padding:9px 6px 10px;border-bottom:2px solid var(--cy-line);font-size:13.5px}
+.cy-notice b{font-weight:800;margin-right:4px}
+.cy-notice em{font-style:normal;color:var(--cy-blue);font-weight:800}
+.cy-list{flex:1;margin-top:8px;font-size:13px}
+.cy-th,.cy-tr{display:grid;grid-template-columns:86px 1fr 130px 44px;gap:8px;align-items:center;padding:8px 6px}
+.cy-th{font-weight:700;color:#666;border-bottom:1px solid #d9dde2;font-size:12.5px}
+.cy-th span:nth-child(3),.cy-th span:nth-child(4),.cy-tr .au,.cy-tr .rd{text-align:center}
+.cy-tr{border-bottom:1px dotted #e1e4e8;cursor:var(--cur-pointer,pointer)}
+.cy-tr:hover,.cy-tr.open{background:#f4fafd}
+.cy-tr .dt{color:#9aa0a8;font-size:11.5px}
+.cy-tr .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cy-tr .au{font-size:13px}
+.cy-tr .au i{font-style:normal;margin-left:1px}
+.cy-tr .au.a0 i{color:var(--cy-pink)}.cy-tr .au.a1 i{color:var(--cy-blue)}
+.cy-tr .rd,.cy-tr .rd button{font-size:15px;color:#9aa0a8}
+.cy-tr .rd button{background:none;border:0;cursor:var(--cur-pointer,pointer);padding:0 6px;font-family:inherit}
+.cy-body{padding:14px 16px 12px 100px;background:#fbfdfe;border-bottom:1px dotted #e1e4e8;animation:bcardOpen .22s ease-out both}
+.cy-body p{white-space:pre-wrap;line-height:1.8;margin:0}
+.cy-acts{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.cy-acts .btn{padding:4px 12px;font-size:11px}
+.cy-empty{text-align:center;color:#a6abb2;padding:40px 0;font-size:12.5px}
+.cy-write{display:flex;justify-content:flex-end;padding-top:10px}
+.cy-pick{display:flex;gap:8px}
+.cy-pick button{flex:1;font:inherit;font-size:13px;padding:9px;border-radius:999px;border:1.5px solid #d9dde2;background:#fff;cursor:var(--cur-pointer,pointer)}
+.cy-pick button.on.a0{border-color:#ff6f9c;background:#fff0f5;color:#e0457a;font-weight:700}
+.cy-pick button.on.a1{border-color:#1ba1d8;background:#eef8fd;color:#1782b0;font-weight:700}
+.cy-gate{background:#fff;border:2px dashed var(--cy-line);border-radius:12px;padding:60px 20px;text-align:center}
+.cy-gate-t{font-size:20px;font-weight:800;color:var(--cy-blue);margin:0 0 8px}
+.cy-gate-d{font-size:13px;color:#8a9099;margin:0 0 18px}
+.cy-gate form{display:flex;gap:8px;justify-content:center;max-width:320px;margin:0 auto}
+.cy-gate form .k-input{flex:1}
+@media (max-width:760px){
+  .cy-book{grid-template-columns:1fr;gap:10px}
+  .cy-rings{display:none}
+  .cy-side{flex-direction:row;flex-wrap:wrap;align-items:center}
+  .cy-our{width:100%;margin:6px 0 0;padding-top:8px}
+  .cy-side-foot{width:100%;grid-template-columns:1fr 1fr;margin-top:6px}
+  .cy-cal{grid-template-columns:1fr}
+  .cy-big{flex-direction:row;gap:8px;border-right:0;border-bottom:1px dotted #c8ccd2;padding-bottom:6px}
+  .cy-th,.cy-tr{grid-template-columns:70px 1fr 96px 30px;gap:4px}
+  .cy-body{padding-left:16px}
+}
