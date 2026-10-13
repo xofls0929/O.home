@@ -9,6 +9,9 @@ import { MAIN_SEC, inSection, secStamp } from './sectionStore';
 
 export interface SchedCategory { id: string; label: string; color: string }
 
+/** 날짜별 체크리스트 한 줄 — 그날 할 일·한 일 */
+export interface DayTodo { id: string; text: string; done: boolean }
+
 export const DEFAULT_SCHED_CATS: SchedCategory[] = [
   { id: 'sc-trpg', label: 'TRPG 세션', color: '#b39b6b' },
   { id: 'sc-due', label: '마감', color: '#a63a45' },
@@ -39,6 +42,12 @@ interface SchedState {
    *  새로 만들자마자 카테고리가 빈칸이면 일정부터 못 넣는다. */
   secCats?: Record<string, SchedCategory[]>;
   allowMember: boolean;      // 회원도 일정 등록 허용 (4.12 등록 권한 옵션) — 스케줄러 공통
+  /** 날짜(YYYY-MM-DD)별 체크리스트 — 스케줄러 공통 */
+  dayTodos?: Record<string, DayTodo[]>;
+  /** 아이클라우드 공개 캘린더 주소(webcal://…) — 읽기 전용으로 달력에 겹쳐 보인다 */
+  icloudUrl?: string;
+  /** 아이클라우드 일정을 방문자에게도 보여 줄지 (기본: 관리자만) */
+  icloudPublic?: boolean;
 }
 
 /** 그 스케줄러의 카테고리 (v2.0) — 따로 정한 적이 없으면 기본 스케줄러 것 */
@@ -108,6 +117,21 @@ export function useSched(secId?: string) {
     return { ...s, events: next };
   }), [apply]);
   const setAllowMember = useCallback((v: boolean) => apply(s => ({ ...s, allowMember: v })), [apply]);
+  // 날짜별 체크리스트 — 빈 날짜는 지워서 설정이 쌓이지 않게 한다
+  const mutDay = useCallback((date: string, fn: (list: DayTodo[]) => DayTodo[]) => apply(s => {
+    const next = fn(s.dayTodos?.[date] ?? []);
+    const dayTodos = { ...s.dayTodos };
+    if (next.length) dayTodos[date] = next; else delete dayTodos[date];
+    return { ...s, dayTodos };
+  }), [apply]);
+  const addDayTodo = useCallback((date: string, text: string) =>
+    mutDay(date, l => [...l, { id: newId(), text, done: false }]), [mutDay]);
+  const toggleDayTodo = useCallback((date: string, id: string) =>
+    mutDay(date, l => l.map(t => (t.id === id ? { ...t, done: !t.done } : t))), [mutDay]);
+  const removeDayTodo = useCallback((date: string, id: string) =>
+    mutDay(date, l => l.filter(t => t.id !== id)), [mutDay]);
+  const setIcloud = useCallback((url: string, pub: boolean) =>
+    apply(s => ({ ...s, icloudUrl: url.trim() || undefined, icloudPublic: pub })), [apply]);
   /* 화면이 볼 상태 — 섹션을 지정하면 그 스케줄러 것만, 아니면 전부.
      저장은 위 함수들이 **원본**을 상대로 하므로 다른 스케줄러가 지워지지 않는다 */
   const st: SchedState = useMemo(() => (secId === undefined
@@ -117,6 +141,7 @@ export function useSched(secId?: string) {
   return {
     st, loaded, addEvent, updateEvent, removeEvent,
     patchCat, addCat, removeCat, setCats, setAllowMember, reorderOn,
+    addDayTodo, toggleDayTodo, removeDayTodo, setIcloud,
   };
 }
 

@@ -1,7 +1,7 @@
 'use client';
 // 스케줄러 (4.12) — 월간 캘린더(정사각 블록) + 우측 D-day/투두(메인 위젯 데이터 공유) + 카테고리
 // 일정: 제목·기간·카테고리·색·메모·공개범위·매년 반복 · 일정 → D-day 승격 · 등록 권한 옵션
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useMainStore } from '@/lib/mainStore';
 import { useSched, SchedEvent, eventColor, eventOnDate } from '@/lib/schedStore';
@@ -14,8 +14,12 @@ import { EditableDesc, PageTitle } from '@/components/ui/PageText';
 import { useToast } from '@/components/ui/Toast';
 import { useMenuSettings } from '@/lib/menuStore';
 import { useSectionParam } from '@/lib/sectionStore';
+import { parseIcs } from '@/lib/ics';
 
 const MONTHS = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+/** 아이클라우드에서 가져온 일정 색 — 읽기 전용이라 카테고리와 구분되게 */
+const ICLOUD_COLOR = '#4a90d9';
+const isIcloud = (e: SchedEvent) => e.id.startsWith('ic-');
 const fmt = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
 function CalInner() {
@@ -27,6 +31,7 @@ function CalInner() {
   const {
     st, loaded, addEvent, updateEvent, removeEvent,
     patchCat, addCat, removeCat, setCats, setAllowMember, reorderOn,
+    addDayTodo, toggleDayTodo, removeDayTodo, setIcloud,
   } = useSched(sec.id);
   const { state: mainState, updateWidget } = useMainStore();
   const del = useConfirmDelete();
@@ -43,6 +48,30 @@ function CalInner() {
     title: '', start: '', end: '', catId: '', color: '', useCatColor: true,
     memo: '', visibility: 'public' as SchedEvent['visibility'], yearly: false,
   });
+  const [todoText, setTodoText] = useState('');
+  // 아이클라우드 연결 — 공개 캘린더 주소를 받아 읽기 전용으로 겹쳐 보인다
+  const [icOpen, setIcOpen] = useState(false);
+  const [icDraft, setIcDraft] = useState({ url: '', pub: false });
+  const [icEvents, setIcEvents] = useState<SchedEvent[]>([]);
+  const [icErr, setIcErr] = useState(false);
+  const showIcloud = !!st.icloudUrl && (isAdmin || !!st.icloudPublic);
+  useEffect(() => {
+    if (!showIcloud || !st.icloudUrl) { setIcEvents([]); return; }
+    let alive = true;
+    fetch(`/api/ics?u=${encodeURIComponent(st.icloudUrl)}`)
+      .then(r => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+      .then(text => {
+        if (!alive) return;
+        setIcErr(false);
+        setIcEvents(parseIcs(text).map((e): SchedEvent => ({
+          id: `ic-${e.uid}`, title: e.title, start: e.start, end: e.end,
+          catId: '', color: ICLOUD_COLOR, visibility: 'public',
+          repeat: e.yearly ? 'yearly' : 'none',
+        })));
+      })
+      .catch(() => { if (alive) { setIcErr(true); setIcEvents([]); } });
+    return () => { alive = false; };
+  }, [showIcloud, st.icloudUrl]);
 
   if (!loaded) return <section className="page" />;
 
@@ -66,9 +95,21 @@ function CalInner() {
     cells.push({ y: view.m === 11 ? view.y + 1 : view.y, m, d: idx, dimmed: true });
   }
 
-  const eventsOn = (date: string) => st.events.filter(e => canSee(e) && eventOnDate(e, date));
+  const eventsOn = (date: string) => [
+    ...st.events.filter(e => canSee(e) && eventOnDate(e, date)),
+    ...icEvents.filter(e => eventOnDate(e, date)),
+  ];
   // 오른쪽 카드가 보여 줄 날짜 — 달력 칸을 누르면 바뀐다 (v2.0)
-  const pickedEvents = eventsOn(picked);
+  // 순서 바꾸기는 내 일정만 — 아이클라우드 일정은 아래에 따로 나열한다
+  const pickedEvents = eventsOn(picked).filter(e => !isIcloud(e));
+  const pickedIcloud = eventsOn(picked).filter(isIcloud);
+  const dayTodos = (date: string) => st.dayTodos?.[date] ?? [];
+  const pickedTodos = dayTodos(picked);
+  const addTodo = () => {
+    if (!todoText.trim()) return;
+    addDayTodo(picked, todoText.trim());
+    setTodoText('');
+  };
 
   const openNew = (date: string) => {
     if (!canWrite) return;
@@ -77,7 +118,7 @@ function CalInner() {
     setEvOpen(true);
   };
   const openEdit = (e: SchedEvent) => {
-    if (!canWrite) return;
+    if (!canWrite || isIcloud(e)) return;   // 아이클라우드 일정은 아이폰 캘린더에서 고친다
     setEvId(e.id);
     setF({
       title: e.title, start: e.start, end: e.end ?? '', catId: e.catId,
@@ -182,6 +223,12 @@ function CalInner() {
                     </div>
                   ))}
                   {evs.length > 3 && <div className="ev more">＋{evs.length - 3}</div>}
+                  {/* 그날 체크리스트 진행 — 한 일 / 전체 */}
+                  {dayTodos(date).length > 0 && (
+                    <div className="ev" style={{ background: 'transparent', color: 'var(--faint)', fontSize: 10 }}>
+                      ✓ {dayTodos(date).filter(t => t.done).length}/{dayTodos(date).length}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -215,14 +262,58 @@ function CalInner() {
                     }} />
                   </div>
                 )} />
-            ) : (
+            ) : pickedIcloud.length === 0 && (
               <p className="hint" style={{ margin: '6px 0 0' }}>
                 이 날짜에 일정이 없습니다{canWrite ? ' — [＋ 추가]로 등록' : ''}
               </p>
             )}
+            {pickedIcloud.map(e => (
+              <div key={e.id} className="dday-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                data-tip="아이클라우드 일정 — 아이폰 캘린더에서 수정">
+                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
+                <small style={{ color: ICLOUD_COLOR, fontSize: 10 }}>iCloud</small>
+              </div>
+            ))}
+          </div>
+          {/* 그날 체크리스트 — 뭐 할지 / 뭐 했는지 */}
+          <div className="panel widget">
+            <h4>{picked.slice(5).replace('-', '월 ')}일 체크리스트</h4>
+            {pickedTodos.map(t => (
+              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <label className={`todo-row k-check ${t.done ? 'done' : ''}`} style={{ flex: 1, ...(!isAdmin ? { pointerEvents: 'none' } : {}) }}>
+                  <input type="checkbox" checked={t.done} onChange={() => toggleDayTodo(picked, t.id)} />
+                  <span className="box" /><span>{t.text}</span>
+                </label>
+                {isAdmin && (
+                  <small style={{ cursor: 'var(--cur-pointer,pointer)', color: 'var(--faint)' }}
+                    onClick={() => removeDayTodo(picked, t.id)}>✕</small>
+                )}
+              </div>
+            ))}
+            {pickedTodos.length === 0 && <p className="hint" style={{ margin: '6px 0 0' }}>체크할 항목이 없습니다</p>}
+            {isAdmin && (
+              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                <KInput placeholder="할 일 추가" value={todoText} style={{ flex: 1 }}
+                  onChange={e => setTodoText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) addTodo(); }} />
+                <button className="btn btn-dark" style={{ padding: '6px 12px' }} onClick={addTodo}>＋</button>
+              </div>
+            )}
           </div>
           {ddayConf && <DdayWidget conf={ddayConf} />}
           {todoConf && <TodoWidget conf={todoConf} />}
+          {isAdmin && (
+            <div className="panel widget">
+              <h4>아이클라우드 <span className="more" onClick={() => {
+                setIcDraft({ url: st.icloudUrl ?? '', pub: !!st.icloudPublic }); setIcOpen(true);
+              }}>{st.icloudUrl ? '설정 ›' : '연결 ›'}</span></h4>
+              <p className="hint" style={{ margin: 0 }}>
+                {!st.icloudUrl ? '연결 안 됨'
+                  : icErr ? '불러오지 못했습니다 — 주소를 확인해 주세요'
+                    : `일정 ${icEvents.length}개 · ${st.icloudPublic ? '방문자에게도 보임' : '나만 보임'}`}
+              </p>
+            </div>
+          )}
           <div className="panel widget">
             <h4>카테고리 {isAdmin && <span className="more" onClick={() => setCatMng(true)}>관리 ›</span>}</h4>
             {st.cats.map(c => (
@@ -294,6 +385,29 @@ function CalInner() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
           <button className="btn btn-ghost" style={{ padding: '5px 12px', fontSize: 11 }} onClick={addCat}>＋ ADD</button>
           <KToggle label="회원도 일정 등록 허용" checked={st.allowMember} onChange={setAllowMember} />
+        </div>
+      </Modal>
+
+      {/* 아이클라우드 연결 (관리자) */}
+      <Modal open={icOpen} onClose={() => setIcOpen(false)} small title="아이클라우드 캘린더 연결"
+        desc="아이폰 캘린더 앱 → 캘린더 목록 → 연결할 캘린더의 ⓘ → 「공개 캘린더」 켜기 → 링크 공유로 복사한 주소를 붙여넣으세요. 읽기 전용으로 달력에 겹쳐 보입니다."
+        actions={<>
+          {st.icloudUrl && (
+            <button className="btn btn-ghost" onClick={() => { setIcloud('', false); setIcOpen(false); toast('연결을 해제했습니다'); }}>연결 해제</button>
+          )}
+          <button className="btn btn-ghost" onClick={() => setIcOpen(false)}>CANCEL</button>
+          <button className="btn btn-dark" onClick={() => {
+            if (!/^(webcals?|https):\/\/[^/]*icloud\.com\//i.test(icDraft.url.trim())) {
+              toast('webcal://…icloud.com 으로 시작하는 공개 캘린더 주소를 넣어 주세요'); return;
+            }
+            setIcloud(icDraft.url, icDraft.pub); setIcOpen(false); toast('저장되었습니다');
+          }}>SAVE</button>
+        </>}>
+        <div style={{ display: 'grid', gap: 10 }}>
+          <KInput placeholder="webcal://p00-caldav.icloud.com/published/2/…" value={icDraft.url}
+            onChange={e => setIcDraft(d => ({ ...d, url: e.target.value }))} />
+          <KToggle label="방문자에게도 아이클라우드 일정 보이기" checked={icDraft.pub}
+            onChange={v => setIcDraft(d => ({ ...d, pub: v }))} />
         </div>
       </Modal>
 
