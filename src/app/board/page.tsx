@@ -17,7 +17,7 @@ import { EditableDesc, PageTitle } from '@/components/ui/PageText';
 
 const PER_PAGE = 10;
 /** 카드형 목록의 말머리 아이콘 — 없는 이름은 폴더 */
-const CAT_ICON: Record<string, string> = { 공지: '📢', 백업: '📦', 잡담: '💬', 기타: '🗂️' };
+const CAT_ICON: Record<string, string> = { 공지: '📢', 백업: '📦', 잡담: '💬', 글: '📝', 기타: '🗂️' };
 
 /** 본문에서 첫 이미지 추출 — 티켓 스킨 썸네일용 (HTML img / MD 이미지) */
 function firstImage(body: string): string | null {
