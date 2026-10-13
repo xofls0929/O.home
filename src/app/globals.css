@@ -1820,3 +1820,4 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
   filter:drop-shadow(0 2px 2px rgba(40,70,110,.22));will-change:transform}
 .shaker-gloss{position:absolute;inset:0;pointer-events:none;border-radius:inherit;
   background:linear-gradient(125deg,rgba(255,255,255,.55) 0 12%,transparent 12% 20%,rgba(255,255,255,.3) 20% 23%,transparent 23%)}
+.shaker-layer{position:absolute;inset:0}
