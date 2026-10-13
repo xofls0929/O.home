@@ -19,7 +19,7 @@ const KEY = 'ohome.couple.v1';
 const PW_KEY = 'ohome.couple.pw';   // 이 탭에서만 기억 — 창을 닫으면 다시 묻는다
 const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-interface Entry { id: string; date: string; title: string; body: string; author: 0 | 1; read: boolean }
+interface Entry { id: string; date: string; title: string; body: string; author: 0 | 1; read: boolean; photos?: string[] }
 interface Diary {
   names: [string, string]; notice: string; since: string; entries: Entry[];
   photo?: string;      // 대문 사진 — data URL로 암호문 안에 같이 들어간다
@@ -39,32 +39,32 @@ const STARTER_PHOTO = '/deco/couple/main.jpg';
 const STARTER_NOTICE = '이번주말 바다보러 가기 ♡';
 const STARTER_SINCE = '2025-12-25';
 // 모찌피치는 상대를 「지훈이」, 모찌피치킬러는 「현준이 / 현준이형 / 현준상」이라고 부른다
-const STARTER: Omit<Entry, 'id'>[] = [
-  { date: '2026-10-01', author: 0, read: true, title: 'ㅇr..오늘은 쫌 우울한날..★',
+// v: 이 글이 처음 들어간 판 — 그 판보다 오래된 다이어리에만 새로 더한다
+type Seed = Omit<Entry, 'id' | 'photos'> & { v: number; photoSrc?: string };
+const STARTER: Seed[] = [
+  { v: 1, date: '2026-10-01', author: 0, read: true, title: 'ㅇr..오늘은 쫌 우울한날..★',
     body: 'ㄴr는 ㄱr끔 눈물을 흘린ㄷr...\n\n그치만 오늘은 아니야 ㅋㅋㅋ\n지훈이가 편의점에서 내가 좋아하는 바나나우유 사왔다 ♡\n빨대까지 꽂아서 줌.. 감동 ㅠ_ㅠ\n\n◆ 오늘의 BGM : 버즈 - 겁쟁이' },
-  { date: '2026-10-03', author: 1, read: true, title: '안전벨트는 내가 매준다 -_-+',
+  { v: 1, date: '2026-10-03', author: 1, read: true, title: '안전벨트는 내가 매준다 -_-+',
     body: '차 타자마자 현준이형 벨트 안 매고 딴짓하길래\n내가 직접 매줬다\n\n싫다고 버둥대는거 완전 웃김 ㅋㅋㅋㅋ\n그래도 안전이 최고니까~\n\n현준상 앞으로도 쭉 내가 매줄거임 ㅡ_ㅡv' },
-  { date: '2026-10-05', author: 0, read: false, title: '지훈이 이 나쁜넘아 ㅠ_ㅠ',
+  { v: 1, date: '2026-10-05', author: 0, read: false, title: '지훈이 이 나쁜넘아 ㅠ_ㅠ',
     body: '지훈이 너 벨트 매주는척 하면서 간지럼 태우는거 다 알거든?!\n\n사진 찍힌거 보니까 내 표정 진짜 웃기다...\n이거 대문사진 할까 말까..★\n\n...한다 ㅋㅋ 이미 함 ^^v' },
-  { date: '2026-10-08', author: 1, read: true, title: '[스크랩] 사랑은... 버스정류장 같은거래',
+  { v: 1, date: '2026-10-08', author: 1, read: true, title: '[스크랩] 사랑은... 버스정류장 같은거래',
     body: '사랑은 버스 같은 거래\n놓쳐도 기다리면 또 온대\n\n근데 나는 안 기다릴래\n이미 왔으니까 ^^*\n그치 현준아?\n\n- 퍼가실때 꼭 꼬릿말 남겨주세요 -' },
-  { date: '2026-10-10', author: 0, read: true, title: '도토리 다 써버렸다..',
+  { v: 1, date: '2026-10-10', author: 0, read: true, title: '도토리 다 써버렸다..',
     body: '새 배경음악 사려고 도토리 충전했는데\n지훈이 홈피 스킨 바꿔주느라 다 썼다 ㅋㅋ\n\n지훈아 고맙다는 말 한마디 안 하면 일촌 끊음 ㅡㅡ+\n\n…농담이야 ♡' },
-  { date: '2026-10-12', author: 1, read: false, title: '오늘도 수고했어',
+  { v: 1, date: '2026-10-12', author: 1, read: false, title: '오늘도 수고했어',
     body: '끝나고 지쳐서 차에서 바로 잠든 현준이형..\n어깨 빌려준 거 기억 안 나지?\n\n현준상 내일도 옆자리는 내가 찜 ♡\n\n◆ 오늘의 BGM : 프리스타일 - Y' },
+  // v3 — 사진 글
+  { v: 3, date: '2026-09-20', author: 1, read: true, title: '손장난 금지 (근데 내가 함)', photoSrc: '/deco/couple/p1.jpg',
+    body: '현준이형 손이 너무 작아서 자꾸 만지게 됨 ㅋㅋ\n형은 핸드크림 바르는 중이었는데\n내가 옆에서 다 뺏어 바름 -_-v\n\n같은 맨투맨 입으니까 커플티 같다고 다들 놀림..\n싫진 않음 ♡\n\n현준상 손 차가우면 말해 내가 녹여줌' },
+  { v: 3, date: '2026-09-27', author: 0, read: true, title: '안아줘..★', photoSrc: '/deco/couple/p2.jpg',
+    body: '대기실 나가는데 지훈이가 문 앞에 서있길래\n팔 쫙 벌렸더니 웃기만 하고 안 옴 ㅡㅡ\n\n끝까지 버티다가 결국 안겨줌 ㅋㅋㅋ\n옆에서 마스코트도 다 봤다.. 부끄럽ㄷr..\n\n지훈아 다음엔 바로 와라 -_-+\n\n◆ 오늘의 BGM : SG워너비 - 내사람' },
+  { v: 3, date: '2026-10-07', author: 0, read: false, title: '어깨 좀 빌릴게 (_ _)zZ', photoSrc: '/deco/couple/p3.jpg',
+    body: '공항에서 기다리는데 너무 졸려서\n지훈이 어깨에 턱 올려놓음 ㅋㅋ\n지훈이는 천장만 보고 있음.. 뭐 생각했냐 너\n\n빨간 후드 맞춰입은거 우리 진짜 쌍둥이같다~\n\n사진 찍어주신 분 감사합니다 ^^*\n이 사진 평생 간직할거임 ♡' },
 ];
-/** 첫 글 묶음 고친 판 — 이미 넣은 다이어리도 같은 날·같은 사람 글을 새 문장으로 바꾼다 */
-const STARTER_V = 2;
+/** 첫 글 묶음 판 — 2: 서로 부르는 이름 반영 / 3: 사진 글 3개 */
+const STARTER_V = 3;
 const OLD_TITLES: Record<string, string> = { '2026-10-05': '킬러 이 나쁜넘아 ㅠ_ㅠ' };
-function upgradeStarter(d: Diary): Diary {
-  if ((d.starterV ?? 1) >= STARTER_V) return d;
-  const entries = d.entries.map(e => {
-    const st = STARTER.find(x => x.date === e.date && x.author === e.author
-      && (x.title === e.title || OLD_TITLES[x.date] === e.title));
-    return st ? { ...e, title: st.title, body: st.body } : e;
-  });
-  return { ...d, entries, starterV: STARTER_V };
-}
 
 async function toDataUrl(src: string): Promise<string | undefined> {
   try {
@@ -74,7 +74,30 @@ async function toDataUrl(src: string): Promise<string | undefined> {
   } catch { return undefined; }
 }
 
-/** 첫 글 묶음·사진·공지를 한 번만 채운다 — 이미 쓴 글은 그대로 두고 뒤에 더한다 */
+async function seedEntry(x: Seed): Promise<Entry> {
+  const { v: _v, photoSrc, ...rest } = x;
+  const photo = photoSrc ? await toDataUrl(photoSrc) : undefined;
+  return { ...rest, id: newId(), ...(photo ? { photos: [photo] } : {}) };
+}
+
+/** 이미 넣은 다이어리를 새 판으로 — 고친 문장은 바꾸고, 새 글은 더한다(직접 쓴 글은 그대로) */
+async function upgradeStarter(d: Diary): Promise<Diary> {
+  const from = d.starterV ?? 1;
+  if (from >= STARTER_V) return d;
+  let entries = d.entries;
+  if (from < 2) {
+    entries = entries.map(e => {
+      const st = STARTER.find(x => x.v === 1 && x.date === e.date && x.author === e.author
+        && (x.title === e.title || OLD_TITLES[x.date] === e.title));
+      return st ? { ...e, title: st.title, body: st.body } : e;
+    });
+  }
+  const add = STARTER.filter(x => x.v > from
+    && !entries.some(e => e.date === x.date && e.author === x.author && e.title === x.title));
+  return { ...d, entries: [...entries, ...await Promise.all(add.map(seedEntry))], starterV: STARTER_V };
+}
+
+/** 첫 글 묶음·사진·공지를 채운다 — 이미 쓴 글은 그대로 두고 뒤에 더한다 */
 async function withStarter(d: Diary): Promise<Diary> {
   if (d.seeded) return upgradeStarter(d);
   return {
@@ -84,8 +107,21 @@ async function withStarter(d: Diary): Promise<Diary> {
     notice: d.notice || STARTER_NOTICE,
     since: d.entries.length ? d.since : STARTER_SINCE,
     photo: d.photo ?? await toDataUrl(STARTER_PHOTO),
-    entries: [...d.entries, ...STARTER.map(e => ({ ...e, id: newId() }))],
+    entries: [...d.entries, ...await Promise.all(STARTER.map(seedEntry))],
   };
+}
+
+/** 글에 붙일 사진 — 긴 변 720px JPEG로 줄여 암호문이 너무 커지지 않게 */
+async function shrink(f: File): Promise<string> {
+  const url = URL.createObjectURL(f);
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const k = Math.min(1, 720 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.85);
+  } finally { URL.revokeObjectURL(url); }
 }
 
 export default function CouplePage() {
@@ -293,7 +329,7 @@ export default function CouplePage() {
                   <React.Fragment key={e.id}>
                     <div className={`cy-tr${openId === e.id ? ' open' : ''}`} onClick={() => setOpenId(openId === e.id ? null : e.id)}>
                       <span className="dt">{fmt(e.date)}</span>
-                      <span className="tt">{e.title}</span>
+                      <span className="tt">{e.title}{(e.photos ?? []).length > 0 && <i className="cy-cam">📷</i>}</span>
                       <span className={`au a${e.author}`}>{d.names[e.author]}<i>♥</i></span>
                       <span className="rd">
                         {isAdmin
@@ -306,6 +342,10 @@ export default function CouplePage() {
                     </div>
                     {openId === e.id && (
                       <div className="cy-body">
+                        {(e.photos ?? []).map((ph, i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img key={i} className="cy-pic" src={ph} alt="" />
+                        ))}
                         <p>{e.body}</p>
                         {isAdmin && (
                           <div className="cy-acts">
@@ -361,6 +401,23 @@ export default function CouplePage() {
                 <KDate value={form.date} onChange={v => setForm({ ...form, date: v })} style={{ maxWidth: 130 }} />
               </div>
               <KTextarea placeholder="오늘 있었던 일" value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} style={{ minHeight: 200 }} />
+              <div className="cy-thumbs">
+                {(form.photos ?? []).map((ph, i) => (
+                  <span key={i}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={ph} alt="" />
+                    <button type="button" onClick={() => setForm({ ...form, photos: (form.photos ?? []).filter((_, j) => j !== i) })}>✕</button>
+                  </span>
+                ))}
+                <label className="cy-add">📷 사진 넣기
+                  <input type="file" accept="image/*" multiple hidden onChange={async e => {
+                    const files = Array.from(e.target.files ?? []);
+                    e.target.value = '';
+                    const add = await Promise.all(files.map(shrink));
+                    setForm(f => (f ? { ...f, photos: [...(f.photos ?? []), ...add] } : f));
+                  }} />
+                </label>
+              </div>
             </div>
           )}
         </Modal>
