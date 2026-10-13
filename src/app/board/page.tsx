@@ -48,6 +48,7 @@ function BoardInner() {
   // 권한 3단계 — mock 단계에선 로그인 전제 (로드뷰 4.10과 동일 규칙)
   const allow = (p: BoardPerm) => (p === 'admin' ? isAdmin : p === 'member' ? !!user : true);
 
+  const hasNotice = posts.some(p => (p.boardId ?? MAIN_BOARD_ID) === board.id && p.notice);
   const visible = useMemo(() => {
     let list = posts.filter(p => (p.boardId ?? MAIN_BOARD_ID) === board.id);
     if (cat === '공지') list = list.filter(p => p.notice);
@@ -87,7 +88,8 @@ function BoardInner() {
       </div>
       <div className="toolrow">
         <div className="seg">
-          {['전체', '공지', ...board.cats.map(x => x.label)].map(c => (
+          {/* 공지 탭은 이 게시판에 공지 글이 있을 때만 */}
+          {['전체', ...(hasNotice ? ['공지'] : []), ...board.cats.map(x => x.label)].map(c => (
             <button key={c} className={cat === c ? 'on' : ''} onClick={() => { setCat(c); setPage(1); }}>{c}</button>
           ))}
         </div>
