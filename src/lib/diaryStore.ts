@@ -20,12 +20,30 @@ export interface DiaryPost {
   title: string;
   date: string;              // YYYY-MM-DD
   moodId: string;
+  /** 날씨 (WEATHERS의 id) — 없으면 표시 안 함 */
+  weather?: string;
   body: string;              // MD
   imgIds: string[];          // 첨부 이미지 (IndexedDB)
   visibility: Visibility;
 }
 
 export const DIARY_SEED: DiaryPost[] = [];
+
+/* ---------- 날씨 — 무드와 달리 고정 목록 ---------- */
+export interface Weather { id: string; name: string; icon: string; color: string }
+
+export const WEATHERS: Weather[] = [
+  { id: 'sunny', name: '맑음', icon: '☀️', color: '#f2b233' },
+  { id: 'partly', name: '구름 조금', icon: '⛅', color: '#9bb3c7' },
+  { id: 'cloudy', name: '흐림', icon: '☁️', color: '#8a94a0' },
+  { id: 'rain', name: '비', icon: '🌧️', color: '#4a90d9' },
+  { id: 'storm', name: '천둥번개', icon: '⛈️', color: '#6b5bd6' },
+  { id: 'snow', name: '눈', icon: '❄️', color: '#6cc3e8' },
+  { id: 'fog', name: '안개', icon: '🌫️', color: '#a7b0b8' },
+  { id: 'wind', name: '바람', icon: '🌬️', color: '#5fb3a1' },
+];
+
+export const weatherOf = (id?: string) => WEATHERS.find(w => w.id === id);
 
 /** hex(#rrggbb) → 옅은 틴트 배경 (아이콘 원 배경용) */
 export const moodTint = (hex: string) => /^#[0-9a-fA-F]{6}$/.test(hex) ? `${hex}26` : 'rgba(127,127,127,.15)';

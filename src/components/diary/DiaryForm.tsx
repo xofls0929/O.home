@@ -1,7 +1,7 @@
 ﻿'use client';
 // 일기 작성/수정 공용 폼 (4.14) — 제목 · 날짜 · 무드 · 내용(MD) · 이미지 · 공개범위
 import React, { useState } from 'react';
-import { DiaryPost, Mood, moodTint } from '@/lib/diaryStore';
+import { DiaryPost, Mood, moodTint, WEATHERS } from '@/lib/diaryStore';
 import { Visibility } from '@/lib/charStore';
 import { newId } from '@/lib/postStore';
 import { KInput, KTextarea, KSelect, KDate } from '@/components/ui/Kit';
@@ -11,7 +11,7 @@ import { putBlob, useBlobUrl } from '@/lib/blobStore';
 import { useToast } from '@/components/ui/Toast';
 
 export interface DiaryFormValue {
-  title: string; date: string; moodId: string; body: string;
+  title: string; date: string; moodId: string; weather: string; body: string;
   imgIds: string[]; visibility: Visibility;
 }
 
@@ -37,6 +37,7 @@ export function DiaryForm({ initial, moods, onSave, onCancel }: {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [date, setDate] = useState(initial?.date ?? todayStr);
   const [moodId, setMoodId] = useState(initial?.moodId ?? moods[0]?.id ?? '');
+  const [weather, setWeather] = useState(initial?.weather ?? '');
   const [body, setBody] = useState(initial?.body ?? '');
   const [imgs, setImgs] = useState<ImgItem[]>(() => (initial?.imgIds ?? []).map(r => ({ id: newId(), ref: r })));
   const [visibility, setVisibility] = useState<Visibility>(initial?.visibility ?? 'public');
@@ -46,7 +47,7 @@ export function DiaryForm({ initial, moods, onSave, onCancel }: {
     if (!title.trim()) { toast('제목을 입력해 주세요'); return; }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('날짜를 YYYY-MM-DD 형식으로 입력해 주세요'); return; }
     const imgIds = await Promise.all(imgs.map(i => (i.file ? putBlob(i.file) : Promise.resolve(i.ref!))));
-    onSave({ title: title.trim(), date, moodId, body, imgIds, visibility });
+    onSave({ title: title.trim(), date, moodId, weather, body, imgIds, visibility });
   };
 
   return (
@@ -70,6 +71,27 @@ export function DiaryForm({ initial, moods, onSave, onCancel }: {
                 }}
                 onClick={() => setMoodId(m.id)}>
                 <span style={{ color: m.color }}>{m.icon}</span> {m.name}
+              </button>
+            ))}
+            {moods.length === 0 && (
+              <p className="hint" style={{ margin: 0 }}>무드가 없습니다 — 환경설정 「무드 리스트」에서 추가</p>
+            )}
+          </div>
+        </div>
+        <div>
+          <label className="k-label" style={{ marginBottom: 6 }}>날씨 — 한 번 더 누르면 해제</label>
+          <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+            {WEATHERS.map(w => (
+              <button key={w.id}
+                className="mood-pick"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 13px', borderRadius: 999,
+                  border: `1.5px solid ${weather === w.id ? w.color : 'var(--line)'}`,
+                  background: weather === w.id ? moodTint(w.color) : 'transparent',
+                  fontSize: 12, transition: '.15s',
+                }}
+                onClick={() => setWeather(cur => (cur === w.id ? '' : w.id))}>
+                <span>{w.icon}</span> {w.name}
               </button>
             ))}
           </div>

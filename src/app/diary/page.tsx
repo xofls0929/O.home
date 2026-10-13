@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useSectionParam, filterSection, sectionSetter } from '@/lib/sectionStore';
 import { useLocalList } from '@/lib/postStore';
-import { DiaryPost, DIARY_SEED, Mood, MOOD_SEED, moodTint } from '@/lib/diaryStore';
+import { DiaryPost, DIARY_SEED, Mood, MOOD_SEED, moodTint, weatherOf } from '@/lib/diaryStore';
 import { renderBody } from '@/lib/sanitize';
 import { SearchBar, Pager } from '@/components/ui/Kit';
 import { ConfirmModal } from '@/components/ui/Modal';
@@ -143,17 +143,24 @@ function DiaryPageInner() {
       <div className="panel" style={{ padding: '6px 20px' }}>
         {shown.map(p => {
           const m = moodOf(p.moodId);
+          const w = weatherOf(p.weather);
           const opened = open === p.id;
           return (
             <div key={p.id} id={p.id} className={`dy-row ${opened ? 'open' : ''}`}>
               {/* 접힘: 제목 세로 중앙 / 펼침: 위 정렬 (4.14 v1.8) */}
               <div className="hd" onClick={() => setOpen(o => (o === p.id ? null : p.id))}>
                 <MoodIcon mood={m} />
+                {w && (
+                  <span data-tip={w.name} style={{
+                    display: 'inline-grid', placeItems: 'center', width: 26, height: 26, borderRadius: '50%',
+                    flexShrink: 0, fontSize: 14, background: moodTint(w.color),
+                  }}>{w.icon}</span>
+                )}
                 <b className="tt">{p.title}</b>
                 {p.visibility !== 'public' && (
                   <span className="pill" style={{ flexShrink: 0 }}>{p.visibility === 'member' ? '멤버' : '비공개'}</span>
                 )}
-                <small className="dt">{p.date.replace(/-/g, '.')}{m ? ` · ${m.name}` : ''}</small>
+                <small className="dt">{p.date.replace(/-/g, '.')}{m ? ` · ${m.name}` : ''}{w ? ` · ${w.name}` : ''}</small>
                 <span className={`arr ${opened ? 'up' : ''}`} />
               </div>
               {/* 항상 렌더 + grid-rows 트랜지션으로 부드럽게 펼침 (덜컥임 방지) */}
