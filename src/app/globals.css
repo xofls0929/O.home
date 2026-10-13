@@ -1827,7 +1827,7 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .gacha-m{--gl:#2d3e55;flex:1;min-height:0;width:min(190px,100%);margin:0 auto;display:flex;flex-direction:column}
 .gacha-top{height:12px;background:var(--accent);border:3px solid var(--gl);border-bottom:0;border-radius:6px 6px 0 0}
 .gacha-tank{position:relative;flex:1.15;min-height:90px;border:3px solid var(--gl);background:linear-gradient(#f4fbff,#dcefff);overflow:hidden}
-.gacha-cap{position:absolute;width:24%;aspect-ratio:1;margin:-12% 0 0 -12%;transform:translate(50%,50%);border-radius:50%;
+.gacha-cap{position:absolute;width:24%;aspect-ratio:1;margin:-12% 0 0 -12%;border-radius:50%;
   border:2.5px solid var(--gl);background:linear-gradient(rgba(255,255,255,.92) 0 50%,var(--cc) 50%);
   box-shadow:inset -3px -3px 0 rgba(0,0,0,.08),inset 3px 3px 0 rgba(255,255,255,.7)}
 .gacha-cap::after{content:'';position:absolute;left:0;right:0;top:calc(50% - 1px);height:2px;background:var(--gl);opacity:.55}
