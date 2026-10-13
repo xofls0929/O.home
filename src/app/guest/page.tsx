@@ -133,7 +133,7 @@ export default function GuestbookPage() {
 
       {/* 작성 */}
       <div className="panel" style={{ marginBottom: 16 }}>
-        <KTextarea placeholder="방명록을 남겨주세요" value={body} onChange={e => setBody(e.target.value)} />
+        <KTextarea placeholder="뱐싱에게 한마디" value={body} onChange={e => setBody(e.target.value)} />
         {!user && (
           /* 게스트 신원 — 오른쪽 정렬 (v1.9 사용자 요청), 컴팩트 GUEST 바 공용 UI */
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
