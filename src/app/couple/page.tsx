@@ -24,6 +24,7 @@ interface Diary {
   names: [string, string]; notice: string; since: string; entries: Entry[];
   photo?: string;      // 대문 사진 — data URL로 암호문 안에 같이 들어간다
   seeded?: boolean;    // 첫 글 묶음을 넣었는지
+  starterV?: number;   // 첫 글 묶음 판
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -37,20 +38,33 @@ const EMPTY: Diary = { names: ['모찌피치', '모찌피치킬러'], notice: ''
 const STARTER_PHOTO = '/deco/couple/main.jpg';
 const STARTER_NOTICE = '이번주말 바다보러 가기 ♡';
 const STARTER_SINCE = '2025-12-25';
+// 모찌피치는 상대를 「지훈이」, 모찌피치킬러는 「현준이 / 현준이형 / 현준상」이라고 부른다
 const STARTER: Omit<Entry, 'id'>[] = [
   { date: '2026-10-01', author: 0, read: true, title: 'ㅇr..오늘은 쫌 우울한날..★',
-    body: 'ㄴr는 ㄱr끔 눈물을 흘린ㄷr...\n\n그치만 오늘은 아니야 ㅋㅋㅋ\n킬러가 편의점에서 내가 좋아하는 바나나우유 사왔다 ♡\n빨대까지 꽂아서 줌.. 감동 ㅠ_ㅠ\n\n◆ 오늘의 BGM : 버즈 - 겁쟁이' },
+    body: 'ㄴr는 ㄱr끔 눈물을 흘린ㄷr...\n\n그치만 오늘은 아니야 ㅋㅋㅋ\n지훈이가 편의점에서 내가 좋아하는 바나나우유 사왔다 ♡\n빨대까지 꽂아서 줌.. 감동 ㅠ_ㅠ\n\n◆ 오늘의 BGM : 버즈 - 겁쟁이' },
   { date: '2026-10-03', author: 1, read: true, title: '안전벨트는 내가 매준다 -_-+',
-    body: '차 타자마자 벨트 안 매고 딴짓하길래\n내가 직접 매줬다\n\n싫다고 버둥대는거 완전 웃김 ㅋㅋㅋㅋ\n그래도 안전이 최고니까~\n\n앞으로도 쭉 내가 매줄거임 ㅡ_ㅡv' },
-  { date: '2026-10-05', author: 0, read: false, title: '킬러 이 나쁜넘아 ㅠ_ㅠ',
-    body: '벨트 매주는척 하면서 간지럼 태우는거 다 알거든?!\n\n사진 찍힌거 보니까 내 표정 진짜 웃기다...\n이거 대문사진 할까 말까..★\n\n...한다 ㅋㅋ 이미 함 ^^v' },
+    body: '차 타자마자 현준이형 벨트 안 매고 딴짓하길래\n내가 직접 매줬다\n\n싫다고 버둥대는거 완전 웃김 ㅋㅋㅋㅋ\n그래도 안전이 최고니까~\n\n현준상 앞으로도 쭉 내가 매줄거임 ㅡ_ㅡv' },
+  { date: '2026-10-05', author: 0, read: false, title: '지훈이 이 나쁜넘아 ㅠ_ㅠ',
+    body: '지훈이 너 벨트 매주는척 하면서 간지럼 태우는거 다 알거든?!\n\n사진 찍힌거 보니까 내 표정 진짜 웃기다...\n이거 대문사진 할까 말까..★\n\n...한다 ㅋㅋ 이미 함 ^^v' },
   { date: '2026-10-08', author: 1, read: true, title: '[스크랩] 사랑은... 버스정류장 같은거래',
-    body: '사랑은 버스 같은 거래\n놓쳐도 기다리면 또 온대\n\n근데 나는 안 기다릴래\n이미 왔으니까 ^^*\n\n- 퍼가실때 꼭 꼬릿말 남겨주세요 -' },
+    body: '사랑은 버스 같은 거래\n놓쳐도 기다리면 또 온대\n\n근데 나는 안 기다릴래\n이미 왔으니까 ^^*\n그치 현준아?\n\n- 퍼가실때 꼭 꼬릿말 남겨주세요 -' },
   { date: '2026-10-10', author: 0, read: true, title: '도토리 다 써버렸다..',
-    body: '새 배경음악 사려고 도토리 충전했는데\n킬러 홈피 스킨 바꿔주느라 다 썼다 ㅋㅋ\n\n고맙다는 말 한마디 안 하면 일촌 끊음 ㅡㅡ+\n\n…농담이야 ♡' },
+    body: '새 배경음악 사려고 도토리 충전했는데\n지훈이 홈피 스킨 바꿔주느라 다 썼다 ㅋㅋ\n\n지훈아 고맙다는 말 한마디 안 하면 일촌 끊음 ㅡㅡ+\n\n…농담이야 ♡' },
   { date: '2026-10-12', author: 1, read: false, title: '오늘도 수고했어',
-    body: '끝나고 지쳐서 차에서 바로 잠든 너..\n어깨 빌려준 거 기억 안 나지?\n\n내일도 옆자리는 내가 찜 ♡\n\n◆ 오늘의 BGM : 프리스타일 - Y' },
+    body: '끝나고 지쳐서 차에서 바로 잠든 현준이형..\n어깨 빌려준 거 기억 안 나지?\n\n현준상 내일도 옆자리는 내가 찜 ♡\n\n◆ 오늘의 BGM : 프리스타일 - Y' },
 ];
+/** 첫 글 묶음 고친 판 — 이미 넣은 다이어리도 같은 날·같은 사람 글을 새 문장으로 바꾼다 */
+const STARTER_V = 2;
+const OLD_TITLES: Record<string, string> = { '2026-10-05': '킬러 이 나쁜넘아 ㅠ_ㅠ' };
+function upgradeStarter(d: Diary): Diary {
+  if ((d.starterV ?? 1) >= STARTER_V) return d;
+  const entries = d.entries.map(e => {
+    const st = STARTER.find(x => x.date === e.date && x.author === e.author
+      && (x.title === e.title || OLD_TITLES[x.date] === e.title));
+    return st ? { ...e, title: st.title, body: st.body } : e;
+  });
+  return { ...d, entries, starterV: STARTER_V };
+}
 
 async function toDataUrl(src: string): Promise<string | undefined> {
   try {
@@ -62,10 +76,11 @@ async function toDataUrl(src: string): Promise<string | undefined> {
 
 /** 첫 글 묶음·사진·공지를 한 번만 채운다 — 이미 쓴 글은 그대로 두고 뒤에 더한다 */
 async function withStarter(d: Diary): Promise<Diary> {
-  if (d.seeded) return d;
+  if (d.seeded) return upgradeStarter(d);
   return {
     ...d,
     seeded: true,
+    starterV: STARTER_V,
     notice: d.notice || STARTER_NOTICE,
     since: d.entries.length ? d.since : STARTER_SINCE,
     photo: d.photo ?? await toDataUrl(STARTER_PHOTO),
@@ -119,7 +134,7 @@ export default function CouplePage() {
     }
     try {
       let d: Diary = { ...EMPTY, ...JSON.parse(plain) };
-      if (isAdmin && !d.seeded) {
+      if (isAdmin && (!d.seeded || (d.starterV ?? 1) < STARTER_V)) {
         d = await withStarter(d);
         setSetting(KEY, await lockBody(JSON.stringify(d), p));
       }
