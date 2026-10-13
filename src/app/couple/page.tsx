@@ -20,13 +20,58 @@ const PW_KEY = 'ohome.couple.pw';   // 이 탭에서만 기억 — 창을 닫으
 const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 interface Entry { id: string; date: string; title: string; body: string; author: 0 | 1; read: boolean }
-interface Diary { names: [string, string]; notice: string; since: string; entries: Entry[] }
+interface Diary {
+  names: [string, string]; notice: string; since: string; entries: Entry[];
+  photo?: string;      // 대문 사진 — data URL로 암호문 안에 같이 들어간다
+  seeded?: boolean;    // 첫 글 묶음을 넣었는지
+}
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const fmt = (s: string) => s.replace(/-/g, '.');
 
 const EMPTY: Diary = { names: ['모찌피치', '모찌피치킬러'], notice: '', since: ymd(new Date()), entries: [] };
+
+/* 첫 글 묶음 — 관리자가 처음 열 때 한 번만 암호문 안으로 옮긴다(seeded).
+   사진 원본(public/deco/couple)은 옮겨진 뒤 저장소에서 지운다 */
+const STARTER_PHOTO = '/deco/couple/main.jpg';
+const STARTER_NOTICE = '이번주말 바다보러 가기 ♡';
+const STARTER_SINCE = '2025-12-25';
+const STARTER: Omit<Entry, 'id'>[] = [
+  { date: '2026-10-01', author: 0, read: true, title: 'ㅇr..오늘은 쫌 우울한날..★',
+    body: 'ㄴr는 ㄱr끔 눈물을 흘린ㄷr...\n\n그치만 오늘은 아니야 ㅋㅋㅋ\n킬러가 편의점에서 내가 좋아하는 바나나우유 사왔다 ♡\n빨대까지 꽂아서 줌.. 감동 ㅠ_ㅠ\n\n◆ 오늘의 BGM : 버즈 - 겁쟁이' },
+  { date: '2026-10-03', author: 1, read: true, title: '안전벨트는 내가 매준다 -_-+',
+    body: '차 타자마자 벨트 안 매고 딴짓하길래\n내가 직접 매줬다\n\n싫다고 버둥대는거 완전 웃김 ㅋㅋㅋㅋ\n그래도 안전이 최고니까~\n\n앞으로도 쭉 내가 매줄거임 ㅡ_ㅡv' },
+  { date: '2026-10-05', author: 0, read: false, title: '킬러 이 나쁜넘아 ㅠ_ㅠ',
+    body: '벨트 매주는척 하면서 간지럼 태우는거 다 알거든?!\n\n사진 찍힌거 보니까 내 표정 진짜 웃기다...\n이거 대문사진 할까 말까..★\n\n...한다 ㅋㅋ 이미 함 ^^v' },
+  { date: '2026-10-08', author: 1, read: true, title: '[스크랩] 사랑은... 버스정류장 같은거래',
+    body: '사랑은 버스 같은 거래\n놓쳐도 기다리면 또 온대\n\n근데 나는 안 기다릴래\n이미 왔으니까 ^^*\n\n- 퍼가실때 꼭 꼬릿말 남겨주세요 -' },
+  { date: '2026-10-10', author: 0, read: true, title: '도토리 다 써버렸다..',
+    body: '새 배경음악 사려고 도토리 충전했는데\n킬러 홈피 스킨 바꿔주느라 다 썼다 ㅋㅋ\n\n고맙다는 말 한마디 안 하면 일촌 끊음 ㅡㅡ+\n\n…농담이야 ♡' },
+  { date: '2026-10-12', author: 1, read: false, title: '오늘도 수고했어',
+    body: '끝나고 지쳐서 차에서 바로 잠든 너..\n어깨 빌려준 거 기억 안 나지?\n\n내일도 옆자리는 내가 찜 ♡\n\n◆ 오늘의 BGM : 프리스타일 - Y' },
+];
+
+async function toDataUrl(src: string): Promise<string | undefined> {
+  try {
+    const b = await (await fetch(src)).blob();
+    if (!b.type.startsWith('image/')) return undefined;
+    return await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result as string); r.readAsDataURL(b); });
+  } catch { return undefined; }
+}
+
+/** 첫 글 묶음·사진·공지를 한 번만 채운다 — 이미 쓴 글은 그대로 두고 뒤에 더한다 */
+async function withStarter(d: Diary): Promise<Diary> {
+  if (d.seeded) return d;
+  return {
+    ...d,
+    seeded: true,
+    notice: d.notice || STARTER_NOTICE,
+    since: d.entries.length ? d.since : STARTER_SINCE,
+    photo: d.photo ?? await toDataUrl(STARTER_PHOTO),
+    entries: [...d.entries, ...STARTER.map(e => ({ ...e, id: newId() }))],
+  };
+}
 
 export default function CouplePage() {
   const { isAdmin } = useAuth();
@@ -46,7 +91,7 @@ export default function CouplePage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [form, setForm] = useState<Entry | null>(null);
   const [mngOpen, setMngOpen] = useState(false);
-  const [draft, setDraft] = useState({ notice: '', since: '', n0: '', n1: '', pw: '' });
+  const [draft, setDraft] = useState<{ notice: string; since: string; n0: string; n1: string; pw: string; photo?: string }>({ notice: '', since: '', n0: '', n1: '', pw: '' });
 
   /* 저장된 금고 읽기 + 이 탭에서 이미 열었으면 바로 연다 */
   useEffect(() => {
@@ -73,7 +118,12 @@ export default function CouplePage() {
       return;
     }
     try {
-      setData({ ...EMPTY, ...JSON.parse(plain) });
+      let d: Diary = { ...EMPTY, ...JSON.parse(plain) };
+      if (isAdmin && !d.seeded) {
+        d = await withStarter(d);
+        setSetting(KEY, await lockBody(JSON.stringify(d), p));
+      }
+      setData(d);
       setPw(p);
       try { sessionStorage.setItem(PW_KEY, p); } catch { /* 무시 */ }
     } catch { toast('다이어리를 읽지 못했어요'); }
@@ -97,6 +147,7 @@ export default function CouplePage() {
   if (!vault) {
     return (
       <section className="page">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css" />
         <div className="cy-frame"><div className="cy-gate">
           <p className="cy-gate-t">💞 커플다이어리</p>
           {isAdmin ? (
@@ -105,7 +156,7 @@ export default function CouplePage() {
               <form onSubmit={async e => {
                 e.preventDefault();
                 if (pwIn.length < 4) { toast('비밀번호는 4자 이상으로 해 주세요'); return; }
-                await save(EMPTY, pwIn); setPw(pwIn);
+                await save(await withStarter(EMPTY), pwIn); setPw(pwIn);
                 try { sessionStorage.setItem(PW_KEY, pwIn); } catch { /* 무시 */ }
               }}>
                 <KInput type="password" placeholder="새 비밀번호" value={pwIn} onChange={e => setPwIn(e.target.value)} />
@@ -122,6 +173,7 @@ export default function CouplePage() {
   if (!data || !pw) {
     return (
       <section className="page">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css" />
         <div className="cy-frame"><div className="cy-gate">
           <p className="cy-gate-t">🔒 커플다이어리</p>
           <p className="cy-gate-d">비밀번호를 입력해야 볼 수 있어요</p>
@@ -165,10 +217,16 @@ export default function CouplePage() {
 
     return (
       <section className="page">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css" />
         <div className="cy-frame">
           <div className="cy-book">
             {/* 왼쪽 — 폴더 */}
             <aside className="cy-side">
+              <p className="cy-count">TODAY <b>{d.entries.filter(e => e.date === ymd(today)).length}</b> | TOTAL <b>{d.entries.length}</b></p>
+              {d.photo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="cy-photo" src={d.photo} alt="" />
+              )}
               <p className="cy-brand">DIARY</p>
               <button className={`cy-fold${who == null && !day ? ' on' : ''}`} onClick={() => { setWho(null); setDay(null); }}>📒 전체보기</button>
               <p className="cy-our">우리다이어리</p>
@@ -298,7 +356,7 @@ export default function CouplePage() {
             <button className="btn btn-ghost" onClick={() => setMngOpen(false)}>CANCEL</button>
             <button className="btn btn-dark" onClick={async () => {
               const next: Diary = {
-                ...d, notice: draft.notice.trim(), since: draft.since || d.since,
+                ...d, notice: draft.notice.trim(), since: draft.since || d.since, photo: draft.photo ?? d.photo,
                 names: [draft.n0.trim() || d.names[0], draft.n1.trim() || d.names[1]],
               };
               if (draft.pw && draft.pw.length < 4) { toast('비밀번호는 4자 이상으로 해 주세요'); return; }
@@ -322,6 +380,13 @@ export default function CouplePage() {
               <KInput value={draft.n0} onChange={e => setDraft({ ...draft, n0: e.target.value })} />
               <KInput value={draft.n1} onChange={e => setDraft({ ...draft, n1: e.target.value })} />
             </div>
+            <label className="k-label">대문 사진</label>
+            <input type="file" accept="image/*" onChange={async e => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const url = await new Promise<string>(res => { const r = new FileReader(); r.onload = () => res(r.result as string); r.readAsDataURL(f); });
+              setDraft({ ...draft, photo: url });
+            }} />
             <label className="k-label">비밀번호 바꾸기 (비우면 그대로)</label>
             <KInput type="password" value={draft.pw} onChange={e => setDraft({ ...draft, pw: e.target.value })} />
           </div>

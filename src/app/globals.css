@@ -1950,3 +1950,19 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
   .cy-th,.cy-tr{grid-template-columns:70px 1fr 96px 30px;gap:4px}
   .cy-body{padding-left:16px}
 }
+/* 싸이월드 그 시절 글꼴 — 윈도우면 돋움·굴림, 없으면 비트맵 느낌의 갈무리 */
+.cy-frame,.cy-frame button,.cy-frame input,.cy-frame .k-input{font-family:'Dotum','돋움','Gulim','굴림','Galmuri11',sans-serif}
+.cy-frame{font-size:12px;letter-spacing:-.01em}
+.cy-fold,.cy-who,.cy-notice,.cy-list,.cy-tr .au,.cy-mng{font-size:12px}
+.cy-our{font-size:13px}
+.cy-th{font-size:12px}
+.cy-tr .dt{font-size:11px}
+.cy-body p{font-size:12px;line-height:2}
+.cy-big b{font-family:Verdana,Tahoma,sans-serif;font-size:30px;letter-spacing:-.04em}
+.cy-big span{font-family:Verdana,Tahoma,sans-serif;font-size:12px}
+.cy-mon>b{font-family:Verdana,Tahoma,sans-serif;font-size:13px}
+.cy-d{font-family:Verdana,Tahoma,sans-serif;font-size:11px}
+.cy-brand{font-family:Verdana,Tahoma,sans-serif}
+.cy-count{font-family:Verdana,Tahoma,sans-serif;font-size:10px;color:#9aa0a8;margin:0 0 8px;letter-spacing:.02em}
+.cy-count b{color:var(--cy-or)}
+.cy-photo{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid var(--cy-line);padding:3px;background:#fff;margin-bottom:12px;display:block}
