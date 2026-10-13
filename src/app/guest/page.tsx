@@ -131,6 +131,11 @@ export default function GuestbookPage() {
     <section className="page">
       <div className="page-head"><PageTitle>GUESTBOOK</PageTitle><EditableDesc k="guest-desc" def="게스트 작성 허용 옵션 · 비밀글 · 관리자 답글" /></div>
 
+      {/* 방명록 위 파치리스 도트 */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/deco/pachirisu-dot.png" alt="" width={120} height={120}
+        style={{ display: 'block', margin: '0 auto 10px', imageRendering: 'pixelated' }} />
+
       {/* 작성 */}
       <div className="panel" style={{ marginBottom: 16 }}>
         <KTextarea placeholder="뱐싱에게 한마디" value={body} onChange={e => setBody(e.target.value)} />
