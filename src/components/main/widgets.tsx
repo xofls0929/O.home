@@ -22,6 +22,7 @@ import { StickyMemo, MEMO_SEED, MEMO_SIZE_W, useMemoSettings } from '@/lib/memoS
 import { BlobImg, useBlobUrl } from '@/lib/blobStore';
 import { normalizeInternalLink } from '@/lib/link';
 import { ShakerWidget } from '@/components/main/ShakerWidget';
+import { GachaWidget } from '@/components/main/GachaWidget';
 import {
   Applicant, APPLY_SEED, useCommSettings, badgeStyle, maskName, inTrash,
 } from '@/lib/commStore';
@@ -668,6 +669,7 @@ export function renderWidget(conf: WidgetConf) {
     case 'memoboard': return <MemoBoardWidget />;
     case 'apply': return <ApplyWidget conf={conf} />;
     case 'shaker': return <ShakerWidget />;
+    case 'gacha': return <GachaWidget />;
     default: return <div className="panel widget"><h4>{WIDGET_META[conf.type]?.title ?? conf.type}</h4></div>;
   }
 }
