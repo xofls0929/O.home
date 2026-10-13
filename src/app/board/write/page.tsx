@@ -13,6 +13,7 @@ import { ConfirmModal } from '@/components/ui/Modal';
 import { RichEditor } from '@/components/ui/RichEditor';
 import { useToast } from '@/components/ui/Toast';
 import { PageTitle, EditableDesc } from '@/components/ui/PageText';
+import { lockBody, openedBody } from '@/lib/postLock';
 
 /** 에디터가 다루지 못해 정리될 만한 태그·속성이 있는가 — 전환 경고 판단 (인트로와 같은 기준) */
 const hasRichHtml = (html: string) =>
@@ -42,6 +43,10 @@ function WriteInner() {
   }, [board.cats.length]);
   const [secret, setSecret] = useState(false);
   const [notice, setNotice] = useState(false);
+  // 비밀번호 잠금 — 본문을 비밀번호로 암호화해 저장 (postLock.ts). 수정할 때도 비밀번호를 다시 받는다
+  const [lockOn, setLockOn] = useState(false);
+  const [lockPw, setLockPw] = useState('');
+  const [saving, setSaving] = useState(false);
   // 태그 (v2.0 사용자 요청) — 쉼표로 구분해 입력, 저장할 때 배열로
   const [tagsText, setTagsText] = useState('');
   const parseTags = (s: string) =>
@@ -70,8 +75,17 @@ function WriteInner() {
     if (!editPid || !postsLoaded || hydrated.current) return;
     const p = posts.find(x => x.id === editPid);
     if (!p) return;
+    // 잠긴 글은 상세 화면에서 비밀번호로 연 본문을 이어받는다 — 열지 않고 들어오면 되돌려 보낸다
+    const opened = p.lock ? openedBody(p.id) : null;
+    if (p.lock && opened === null) {
+      hydrated.current = true;
+      toast('글 화면에서 비밀번호를 먼저 입력해 주세요');
+      router.replace(`/board/${p.id}`);
+      return;
+    }
     hydrated.current = true;
-    setTitle(p.title); setBody(p.body);
+    setTitle(p.title); setBody(opened ?? p.body);
+    setLockOn(!!p.lock);
     // 에디터로 쓴 글은 에디터로 다시 연다 — 예전에는 무조건 HTML 소스가 떠서
     // 에디터로 쓴 글을 수정하면 갑자기 태그가 보였다 (authored 없는 옛 글은 지금까지대로 HTML)
     setWriteMode(p.mode === 'md' ? 'md' : (p.authored === 'editor' ? 'editor' : 'html'));
@@ -93,28 +107,35 @@ function WriteInner() {
     );
   }
 
-  const post = () => {
+  const post = async () => {
+    if (saving) return;
     if (!title.trim() || !body.trim()) { toast('제목과 내용을 입력해 주세요'); return; }
+    if (lockOn && lockPw.length < 4) { toast('잠금 비밀번호를 4자 이상 입력해 주세요'); return; }
+    if (editing && editing.authorId !== user.id) { toast('수정은 작성자 본인만 할 수 있습니다'); return; }
+    setSaving(true);
+    // 잠금이면 본문은 암호문으로만 저장하고 body는 비운다 — 서버에 평문이 남지 않게
+    const lock = lockOn ? await lockBody(body, lockPw) : undefined;
+    const savedBody = lockOn ? '' : body;
+    setSaving(false);
     if (editing) {
       // 수정 — 작성자 본인만 (관리자도 타인 글은 삭제만, v1.9). 작성자/날짜/댓글/소속 게시판은 유지
-      if (editing.authorId !== user.id) { toast('수정은 작성자 본인만 할 수 있습니다'); return; }
       setPosts(posts.map(p => (p.id === editing.id ? {
         ...p,
-        title: title.trim(), body,
+        title: title.trim(), body: savedBody, lock,
         mode: writeMode === 'md' ? 'md' : 'html',
         authored: writeMode === 'editor' ? 'editor' : undefined,
         category,
         secret, notice: isAdmin ? notice : p.notice,
         tags: parseTags(tagsText),
         fold: foldType === 'none' ? null : { type: foldType, label: foldType === 'custom' ? foldLabel : undefined },
-        thumbSrc, thumbCrop,
+        thumbSrc: lockOn ? undefined : thumbSrc, thumbCrop: lockOn ? undefined : thumbCrop,
       } : p)));
       toast('수정되었습니다');
       router.push(`/board/${editing.id}`);
       return;
     }
     const p: Post = {
-      id: newId(), title: title.trim(), body,
+      id: newId(), title: title.trim(), body: savedBody, lock,
       mode: writeMode === 'md' ? 'md' : 'html', category,
       author: user.nickname, authorId: user.id, date: new Date().toISOString(),
       secret, notice: isAdmin && notice,
@@ -122,7 +143,8 @@ function WriteInner() {
       fold: foldType === 'none' ? null : { type: foldType, label: foldType === 'custom' ? foldLabel : undefined },
       comments: [],
       boardId: board.id,   // 소속 게시판 (5.2 다중 게시판)
-      thumbSrc, thumbCrop,
+      // 잠긴 글의 대표 이미지는 목록에 그대로 드러나므로 쓰지 않는다
+      thumbSrc: lockOn ? undefined : thumbSrc, thumbCrop: lockOn ? undefined : thumbCrop,
     };
     setPosts([p, ...posts]);
     toast('등록되었습니다');
@@ -223,6 +245,11 @@ function WriteInner() {
             </div>
             <div style={{ display: 'grid', gap: 9 }}>
               <KCheck label="비밀글 (관리자와 나만 열람)" checked={secret} onChange={setSecret} />
+              <KCheck label="비밀번호 잠금 (비밀번호를 아는 사람만 열람)" checked={lockOn} onChange={setLockOn} />
+              {lockOn && (
+                <KInput type="password" value={lockPw} onChange={e => setLockPw(e.target.value)}
+                  placeholder={editing?.lock ? '비밀번호 다시 입력 (4자 이상)' : '잠금 비밀번호 (4자 이상)'} />
+              )}
               {isAdmin && <KCheck label="공지로 고정" checked={notice} onChange={setNotice} />}
             </div>
           </div>
@@ -243,7 +270,7 @@ function WriteInner() {
           <div className="form-actions">
             <button className="btn btn-onbk"
               onClick={() => router.push(editing ? `/board/${editing.id}` : boardHref(board.id))}>CANCEL</button>
-            <button className="btn btn-accent" onClick={post}>{editing ? 'SAVE' : 'POST'}</button>
+            <button className="btn btn-accent" onClick={() => { void post(); }} disabled={saving}>{editing ? 'SAVE' : 'POST'}</button>
           </div>
         </div>
       </div>

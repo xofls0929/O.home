@@ -17,6 +17,7 @@ import { GuestIdBar } from '@/components/ui/GuestId';
 import { useToast } from '@/components/ui/Toast';
 import { PageTitle } from '@/components/ui/PageText';
 import { pushNotif } from '@/lib/notifStore';
+import { unlockBody, rememberOpened } from '@/lib/postLock';
 
 const FOLD_LABEL = { spoiler: '스포일러 주의', adult: '수위 주의' };
 
@@ -35,6 +36,10 @@ export default function BoardDetailPage() {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [delAsk, setDelAsk] = useState(false);
   const [gName, setGName] = useState('');                       // 게스트 닉네임 (방문자 댓글 허용 시)
+  // 비밀번호 잠금 글 — 맞는 비밀번호를 넣으면 여기에 풀린 본문이 담긴다 (이 화면에서만)
+  const [plain, setPlain] = useState<string | null>(null);
+  const [pwIn, setPwIn] = useState('');
+  const [unlocking, setUnlocking] = useState(false);
 
   const post = posts.find(p => p.id === id);
   /* 이 글이 속한 곳이 비공개면 주소로 들어와도 열리지 않게 (v2.0 사용자 요청).
@@ -43,7 +48,11 @@ export default function BoardDetailPage() {
   const bid = post?.boardId ?? MAIN_BOARD_ID;
   const blocked = useHrefBlock(post && (bid === MAIN_BOARD_ID ? '/board' : extraBoardHref(bid)));
   // loaded 이후에만 본문 렌더 (SSR/하이드레이션 불일치 방지)
-  const html = useMemo(() => (post && loaded ? renderBody(post.mode, post.body) : ''), [post, loaded]);
+  const html = useMemo(() => {
+    if (!post || !loaded) return '';
+    if (post.lock) return plain === null ? '' : renderBody(post.mode, plain);
+    return renderBody(post.mode, post.body);
+  }, [post, loaded, plain]);
 
   // 막힌 곳이면 여기서 되돌아간다 — 훅을 모두 부른 뒤여야 렌더마다 개수가 같다
   if (blocked) return blocked;
@@ -74,6 +83,16 @@ export default function BoardDetailPage() {
   const canComment = allow(board.permComment) && (!!user || guestMode);
 
   const canManage = isAdmin || isAuthor;
+  const locked = !!post.lock && plain === null;
+  const tryUnlock = async () => {
+    if (!post.lock || unlocking || !pwIn) return;
+    setUnlocking(true);
+    const body = await unlockBody(post.lock, pwIn);
+    setUnlocking(false);
+    if (body === null) { toast('비밀번호가 맞지 않습니다'); return; }
+    setPlain(body); setPwIn('');
+    rememberOpened(post.id, body);   // 작성자가 바로 수정하러 갈 때 이어받는다
+  };
   const update = (patch: Partial<Post>) =>
     setPosts(posts.map(p => (p.id === post.id ? { ...p, ...patch } : p)));
 
@@ -154,7 +173,7 @@ export default function BoardDetailPage() {
         <p>{post.notice ? '공지 · ' : `${post.category} · `}{post.author} · {fmtDate(post.date)}</p>
         <div className="head-actions">
           {/* 수정은 작성자 본인만 — 관리자도 타인 글은 삭제만 (v1.9) */}
-          {isAuthor && (
+          {isAuthor && !locked && (
             <button className="btn btn-dark" onClick={() => router.push(`/board/write?edit=${post.id}`)}>EDIT</button>
           )}
           {canManage && (
@@ -165,7 +184,7 @@ export default function BoardDetailPage() {
 
       <div className="panel" style={{ padding: '26px 28px' }}>
         <h2 style={{ fontSize: 19, marginBottom: 4 }}>
-          {post.secret && '🔒 '}{post.title}
+          {post.secret && '🔒 '}{post.lock && '🔑 '}{post.title}
         </h2>
         <p style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 18 }}>
           {post.author} · {fmtDate(post.date)} · {post.mode.toUpperCase()}
@@ -175,7 +194,20 @@ export default function BoardDetailPage() {
           ))}
         </p>
 
-        {/* 접기 (6.2) — 흐림 커버, 클릭 시 표시 */}
+        {/* 비밀번호 잠금 — 맞는 비밀번호를 넣기 전에는 본문(암호문)을 보여 주지 않는다 */}
+        {locked && (
+          <div style={{ padding: '28px 0 12px', textAlign: 'center' }}>
+            <p style={{ fontSize: 13, color: 'var(--faint)', marginBottom: 14 }}>🔑 비밀번호를 입력해야 볼 수 있는 글입니다</p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', maxWidth: 320, margin: '0 auto' }}>
+              <KInput type="password" placeholder="비밀번호" value={pwIn} style={{ flex: 1 }}
+                onChange={e => setPwIn(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') void tryUnlock(); }} />
+              <button className="btn btn-dark" onClick={() => { void tryUnlock(); }} disabled={unlocking}>열기</button>
+            </div>
+          </div>
+        )}
+        {!locked && (
+        /* 접기 (6.2) — 흐림 커버, 클릭 시 표시 */
         <div className={`veil ${!post.fold || open ? 'open' : ''}`}>
           {post.fold && !open && (
             <div className="cover" onClick={() => setOpen(true)} style={{ position: 'absolute' }}>
@@ -188,9 +220,11 @@ export default function BoardDetailPage() {
           <div className="post-body" style={post.fold && !open ? { minHeight: 120, filter: 'blur(6px)' } : undefined}
             dangerouslySetInnerHTML={{ __html: html }} />
         </div>
+        )}
       </div>
 
-      {/* 댓글 + 대댓글 */}
+      {/* 댓글 + 대댓글 — 잠긴 글은 연 다음에만 */}
+      {!locked && (
       <div className="panel" style={{ padding: 0, marginTop: 16 }}>
         <div style={{ padding: '16px 18px' }}>
           <h4 style={{ fontSize: 11.5, letterSpacing: '.12em', color: 'var(--faint)', marginBottom: 13 }}>
@@ -225,6 +259,7 @@ export default function BoardDetailPage() {
           </div>
         )}
       </div>
+      )}
 
       <ConfirmModal open={delAsk} title="글을 삭제하시겠습니까?" body="삭제한 글은 복구할 수 없습니다."
         onClose={() => setDelAsk(false)}

@@ -3,6 +3,7 @@
 // v2.0: 서버(Supabase) 연결이 있으면 DB, 없으면 localStorage — 화면 코드는 동일하다.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PostMode } from './sanitize';
+import type { PostLock } from './postLock';
 import { isServerMode } from './supabase';
 import { TABLE_OF, fetchList, syncList, subscribeTable } from './db';
 import { currentUserId } from './currentUser';
@@ -75,6 +76,8 @@ export interface Post {
   tags?: string[];
   thumbSrc?: string;     // 티켓 스킨 대표 이미지 — 본문에 삽입한 이미지 중 선택 (v1.9)
   thumbCrop?: { x: number; y: number; scale: number };  // 대표 썸네일 크롭 (16:9)
+  /** 비밀번호 잠금 — 있으면 body는 비어 있고 본문은 여기 암호문으로만 있다 (postLock.ts) */
+  lock?: PostLock;
 }
 
 export interface GuestEntry {

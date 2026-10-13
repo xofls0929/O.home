@@ -118,7 +118,7 @@ function BoardInner() {
                     {p.fold && <span style={boardBadgeStyle(boardSet.system[2])}>{boardSet.system[2].label}</span>}
                   </div>
                   <div className="bt-title">
-                    {canRead(p) ? <>{p.secret && '🔒 '}{p.title}</> : '🔒 비밀글입니다'}
+                    {canRead(p) ? <>{p.secret && '🔒 '}{p.lock && '🔑 '}{p.title}</> : '🔒 비밀글입니다'}
                     {canRead(p) && cmtCount(p) > 0 && <span className="cmt">{cmtCount(p)}</span>}
                   </div>
                   <div className="bt-meta">{p.author} · {fmtDate(p.date)}</div>
@@ -141,7 +141,7 @@ function BoardInner() {
               <div className="tcell">
                 {canRead(p) ? (
                   <b>
-                    {p.secret && '🔒 '}{p.title}
+                    {p.secret && '🔒 '}{p.lock && '🔑 '}{p.title}
                     {cmtCount(p) > 0 && <span className="cmt">{cmtCount(p)}</span>}
                     {p.fold && <span style={{ ...boardBadgeStyle(boardSet.system[2]), marginLeft: 6 }}>{boardSet.system[2].label}</span>}
                   </b>
