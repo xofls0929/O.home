@@ -16,6 +16,8 @@ import { CropImg } from '@/components/ui/CropEditor';
 import { EditableDesc, PageTitle } from '@/components/ui/PageText';
 
 const PER_PAGE = 10;
+/** 카드형 목록의 말머리 아이콘 — 없는 이름은 폴더 */
+const CAT_ICON: Record<string, string> = { 공지: '📢', 백업: '📦', 잡담: '💬', 기타: '🗂️' };
 
 /** 본문에서 첫 이미지 추출 — 티켓 스킨 썸네일용 (HTML img / MD 이미지) */
 function firstImage(body: string): string | null {
@@ -40,10 +42,12 @@ function BoardInner() {
   const [cat, setCat] = useState('전체');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
+  // 카드형 — 펼친 말머리 (한 번에 하나, 다시 누르면 접힘)
+  const [openCat, setOpenCat] = useState<string | null>(null);
 
   // 게시판 전환 시 필터·페이지 초기화
   const [prevBid, setPrevBid] = useState(bid);
-  if (prevBid !== bid) { setPrevBid(bid); setCat('전체'); setQ(''); setPage(1); }
+  if (prevBid !== bid) { setPrevBid(bid); setCat('전체'); setQ(''); setPage(1); setOpenCat(null); }
 
   // 권한 3단계 — mock 단계에선 로그인 전제 (로드뷰 4.10과 동일 규칙)
   const allow = (p: BoardPerm) => (p === 'admin' ? isAdmin : p === 'member' ? !!user : true);
@@ -80,6 +84,39 @@ function BoardInner() {
     </span>
   );
 
+  const row = (p: Post) => (
+    <div className="brow" key={p.id} onClick={() => { if (canRead(p)) router.push(`/board/${p.id}`); }}>
+      <span className="cat">{postBadge(p)}</span>
+      {/* 제목 칸 안에서 태그를 오른쪽 끝(=작성자 바로 왼쪽)에 정렬 (v2.0 사용자 요청) —
+          칸을 따로 만들면 행마다 그리드가 독립이라 작성자 열이 태그 길이만큼 어긋난다 */}
+      <div className="tcell">
+        {canRead(p) ? (
+          <b>
+            {p.secret && '🔒 '}{p.lock && '🔑 '}{p.title}
+            {cmtCount(p) > 0 && <span className="cmt">{cmtCount(p)}</span>}
+            {p.fold && <span style={{ ...boardBadgeStyle(boardSet.system[2]), marginLeft: 6 }}>{boardSet.system[2].label}</span>}
+          </b>
+        ) : (
+          <b style={{ color: 'var(--faint)' }}>🔒 비밀글입니다</b>
+        )}
+        {canRead(p) && (p.tags ?? []).length > 0 && (
+          <span className="tags">{(p.tags ?? []).map(t => <i key={t}>#{t}</i>)}</span>
+        )}
+      </div>
+      <span className="who">{p.author}</span>
+      <span className="dt">{fmtDate(p.date)}</span>
+    </div>
+  );
+
+  /* 카드형 (사용자 요청) — 말머리마다 카드 한 장, 누르면 그 말머리 글이 아래로 쫙 펼쳐진다.
+     검색 중에는 말머리 구분 없이 결과만 보여 준다 */
+  const cardMode = board.skin !== 'ticket' && !q;
+  const boardPosts = posts.filter(p => (p.boardId ?? MAIN_BOARD_ID) === board.id);
+  const catDefs = [...(hasNotice ? [boardSet.system[0]] : []), ...board.cats];
+  const postsOf = (label: string) => boardPosts
+    .filter(p => (label === boardSet.system[0].label ? p.notice : p.category === label))
+    .sort((a, b) => b.date.localeCompare(a.date));
+
   return (
     <section className="page">
       <div className="page-head">
@@ -87,12 +124,12 @@ function BoardInner() {
         <EditableDesc k={board.id === MAIN_BOARD_ID ? 'board-desc' : `board-desc-${board.id}`} def={board.desc} />
       </div>
       <div className="toolrow">
-        <div className="seg">
+        {cardMode ? <span /> : <div className="seg">
           {/* 공지 탭은 이 게시판에 공지 글이 있을 때만 */}
           {['전체', ...(hasNotice ? ['공지'] : []), ...board.cats.map(x => x.label)].map(c => (
             <button key={c} className={cat === c ? 'on' : ''} onClick={() => { setCat(c); setPage(1); }}>{c}</button>
           ))}
-        </div>
+        </div>}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <SearchBar onSearch={v => { setQ(v); setPage(1); }} />
           {allow(board.permWrite) && !!user && (
@@ -132,38 +169,43 @@ function BoardInner() {
             <div className="panel" style={{ padding: 36, textAlign: 'center', fontSize: 12.5, color: 'var(--faint)' }}>게시글이 없습니다</div>
           )}
         </div>
+      ) : cardMode ? (
+        <div style={board.fg ? { color: board.fg } : undefined}>
+          <div className="bcards">
+            {catDefs.map(c => {
+              const list = postsOf(c.label);
+              const on = openCat === c.label;
+              return (
+                <button key={c.id} type="button" className={`bcard${on ? ' on' : ''}`}
+                  style={{ ['--cbg' as string]: c.bg, ['--cbd' as string]: c.border, ['--cfg' as string]: c.fg }}
+                  onClick={() => setOpenCat(on ? null : c.label)}>
+                  <span className="ic">{CAT_ICON[c.label] ?? '📁'}</span>
+                  <b>{c.label}</b>
+                  <small>{list.length}개의 글{list[0] ? ` · 최근 ${fmtDate(list[0].date)}` : ''}</small>
+                  <i className="chev">▾</i>
+                </button>
+              );
+            })}
+          </div>
+          {openCat && (
+            <div className="panel board-list flush bcard-list" key={openCat}>
+              {postsOf(openCat).map(row)}
+              {postsOf(openCat).length === 0 && (
+                <div style={{ padding: 36, textAlign: 'center', fontSize: 12.5, color: 'var(--faint)' }}>아직 글이 없어요</div>
+              )}
+            </div>
+          )}
+        </div>
       ) : (
         /* 기본형 스킨 — 리스트 행 (글씨색은 게시판 관리에서 지정 가능, v1.9) */
         <div className="panel board-list flush" style={board.fg ? { color: board.fg } : undefined}>
-          {pageList.map(p => (
-            <div className="brow" key={p.id} onClick={() => { if (canRead(p)) router.push(`/board/${p.id}`); }}>
-              <span className="cat">{postBadge(p)}</span>
-              {/* 제목 칸 안에서 태그를 오른쪽 끝(=작성자 바로 왼쪽)에 정렬 (v2.0 사용자 요청) —
-                  칸을 따로 만들면 행마다 그리드가 독립이라 작성자 열이 태그 길이만큼 어긋난다 */}
-              <div className="tcell">
-                {canRead(p) ? (
-                  <b>
-                    {p.secret && '🔒 '}{p.lock && '🔑 '}{p.title}
-                    {cmtCount(p) > 0 && <span className="cmt">{cmtCount(p)}</span>}
-                    {p.fold && <span style={{ ...boardBadgeStyle(boardSet.system[2]), marginLeft: 6 }}>{boardSet.system[2].label}</span>}
-                  </b>
-                ) : (
-                  <b style={{ color: 'var(--faint)' }}>🔒 비밀글입니다</b>
-                )}
-                {canRead(p) && (p.tags ?? []).length > 0 && (
-                  <span className="tags">{(p.tags ?? []).map(t => <i key={t}>#{t}</i>)}</span>
-                )}
-              </div>
-              <span className="who">{p.author}</span>
-              <span className="dt">{fmtDate(p.date)}</span>
-            </div>
-          ))}
+          {pageList.map(row)}
           {pageList.length === 0 && (
             <div style={{ padding: 36, textAlign: 'center', fontSize: 12.5, color: 'var(--faint)' }}>게시글이 없습니다</div>
           )}
         </div>
       )}
-      <Pager page={page} total={totalPages} onChange={setPage} />
+      {!cardMode && <Pager page={page} total={totalPages} onChange={setPage} />}
     </section>
   );
 }
