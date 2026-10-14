@@ -6,9 +6,38 @@ import { useMainStore } from '@/lib/mainStore';
 
 interface Prize { id: string; img: string; name: string; weight: number }
 // 포켓몬을 늘리려면 public/deco/gacha/ 에 GIF를 넣고 여기에 한 줄 추가
+// 이브이 진화체 · 1~6세대 스타팅은 pokestats.gg의 5세대(블랙·화이트) 움직이는 스프라이트
 const PRIZES: Prize[] = [
   { id: 'pachirisu', img: '/deco/gacha/pachirisu.gif', name: '파치리스', weight: 1 },
   { id: 'skitty', img: '/deco/gacha/skitty.gif', name: '에나비', weight: 1 },
+  { id: 'pikachu', img: '/deco/gacha/pikachu.gif', name: '피카츄', weight: 1 },
+  { id: 'eevee', img: '/deco/gacha/eevee.gif', name: '이브이', weight: 1 },
+  { id: 'vaporeon', img: '/deco/gacha/vaporeon.gif', name: '샤미드', weight: 1 },
+  { id: 'jolteon', img: '/deco/gacha/jolteon.gif', name: '쥬피썬더', weight: 1 },
+  { id: 'flareon', img: '/deco/gacha/flareon.gif', name: '부스터', weight: 1 },
+  { id: 'espeon', img: '/deco/gacha/espeon.gif', name: '에브이', weight: 1 },
+  { id: 'umbreon', img: '/deco/gacha/umbreon.gif', name: '블래키', weight: 1 },
+  { id: 'leafeon', img: '/deco/gacha/leafeon.gif', name: '리피아', weight: 1 },
+  { id: 'glaceon', img: '/deco/gacha/glaceon.gif', name: '글레이시아', weight: 1 },
+  { id: 'sylveon', img: '/deco/gacha/sylveon.gif', name: '님피아', weight: 1 },
+  { id: 'bulbasaur', img: '/deco/gacha/bulbasaur.gif', name: '이상해씨', weight: 1 },
+  { id: 'charmander', img: '/deco/gacha/charmander.gif', name: '파이리', weight: 1 },
+  { id: 'squirtle', img: '/deco/gacha/squirtle.gif', name: '꼬부기', weight: 1 },
+  { id: 'chikorita', img: '/deco/gacha/chikorita.gif', name: '치코리타', weight: 1 },
+  { id: 'cyndaquil', img: '/deco/gacha/cyndaquil.gif', name: '브케인', weight: 1 },
+  { id: 'totodile', img: '/deco/gacha/totodile.gif', name: '리아코', weight: 1 },
+  { id: 'treecko', img: '/deco/gacha/treecko.gif', name: '나무지기', weight: 1 },
+  { id: 'torchic', img: '/deco/gacha/torchic.gif', name: '아차모', weight: 1 },
+  { id: 'mudkip', img: '/deco/gacha/mudkip.gif', name: '물짱이', weight: 1 },
+  { id: 'turtwig', img: '/deco/gacha/turtwig.gif', name: '모부기', weight: 1 },
+  { id: 'chimchar', img: '/deco/gacha/chimchar.gif', name: '불꽃숭이', weight: 1 },
+  { id: 'piplup', img: '/deco/gacha/piplup.gif', name: '팽도리', weight: 1 },
+  { id: 'snivy', img: '/deco/gacha/snivy.gif', name: '주리비얀', weight: 1 },
+  { id: 'tepig', img: '/deco/gacha/tepig.gif', name: '뚜꾸리', weight: 1 },
+  { id: 'oshawott', img: '/deco/gacha/oshawott.gif', name: '수댕이', weight: 1 },
+  { id: 'chespin', img: '/deco/gacha/chespin.gif', name: '도치마론', weight: 1 },
+  { id: 'fennekin', img: '/deco/gacha/fennekin.gif', name: '푸호꼬', weight: 1 },
+  { id: 'froakie', img: '/deco/gacha/froakie.gif', name: '개구마르', weight: 1 },
 ];
 const MACHINE = '/deco/gacha/machine.png';
 const TURN_GIF = '/deco/gacha/machine-turn.gif';   // 한 번만 재생 — 다이얼이 돌고 볼이 오른쪽 아래로 굴러 나온다
