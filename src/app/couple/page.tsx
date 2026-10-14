@@ -1,3 +1,46 @@
+'use client';
+/**
+ * 커플다이어리 — 싸이월드 커플 다이어리 느낌. 자캐 둘(모찌피치 / 모찌피치킬러)이 번갈아 쓴다.
+ *
+ * 비밀번호를 알아야 열린다. 화면에서만 가리면 설정 API로 내용이 보이므로
+ * 다이어리 전체(공지·만난 날·글)를 비밀번호로 **암호화해서** 사이트 설정 한 칸에 둔다.
+ * 비밀번호를 모르면 관리자도 서버에서 내용을 읽을 수 없다. 글쓰기·수정은 관리자만.
+ */
+import React, { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '@/lib/auth';
+import { getSetting, setSetting, onSettingChange } from '@/lib/settingStore';
+import { lockBody, unlockBody, PostLock } from '@/lib/postLock';
+import { newId } from '@/lib/postStore';
+import { KInput, KTextarea, KDate } from '@/components/ui/Kit';
+import { Modal, useConfirmDelete } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
+
+const KEY = 'ohome.couple.v1';
+const PW_KEY = 'ohome.couple.pw';   // 이 탭에서만 기억 — 창을 닫으면 다시 묻는다
+const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+interface Entry { id: string; date: string; title: string; body: string; author: 0 | 1; read: boolean; photos?: string[] }
+interface Diary {
+  names: [string, string]; notice: string; since: string; entries: Entry[];
+  photo?: string;      // 대문 사진 — data URL로 암호문 안에 같이 들어간다
+  seeded?: boolean;    // 첫 글 묶음을 넣었는지
+  starterV?: number;   // 첫 글 묶음 판
+}
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fmt = (s: string) => s.replace(/-/g, '.');
+
+const EMPTY: Diary = { names: ['모찌피치', '모찌피치킬러'], notice: '', since: ymd(new Date()), entries: [] };
+
+/* 첫 글 묶음 — 관리자가 처음 열 때 한 번만 암호문 안으로 옮긴다(seeded).
+   사진 원본(public/deco/couple)은 옮겨진 뒤 저장소에서 지운다 */
+const STARTER_PHOTO = '/deco/couple/main.jpg';
+const STARTER_NOTICE = '이번주말 바다보러 가기 ♡';
+const STARTER_SINCE = '2025-12-25';
+// 모찌피치는 상대를 「지훈이」, 모찌피치킬러는 「현준이 / 현준이형 / 현준상」이라고 부른다
+// v: 이 글이 처음 들어간 판 — 그 판보다 오래된 다이어리에만 새로 더한다
+type Seed = Omit<Entry, 'id' | 'photos'> & { v: number; photoSrc?: string };
 const STARTER: Seed[] = [
   { v: 5, date: "2025-12-25", author: 1, read: true, title: "오늘부터 1일 ♡♡♡",
     body: "크리스마스에 고백하는 거 유치하다고 했던 사람 누구?\n현준이형이 먼저 했음 ㅋㅋㅋㅋ\n\n나는 그냥 케이크 먹으러 간 건데\n형이 포크 내려놓더니 진지하게 '지훈아' 하길래\n혼나는 줄 알았잖아;;\n\n대답 너무 빨리 해서 쪽팔림..\n그래도 오늘부터 1일 ♡\n현준상 사랑해~ 이건 평생 박제다 -_-v\n\n◆ 오늘의 BGM : 성시경 - 거리에서" },
