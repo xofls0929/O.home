@@ -1,77 +1,69 @@
-'use client';
-/**
- * 커플다이어리 — 싸이월드 커플 다이어리 느낌. 자캐 둘(모찌피치 / 모찌피치킬러)이 번갈아 쓴다.
- *
- * 비밀번호를 알아야 열린다. 화면에서만 가리면 설정 API로 내용이 보이므로
- * 다이어리 전체(공지·만난 날·글)를 비밀번호로 **암호화해서** 사이트 설정 한 칸에 둔다.
- * 비밀번호를 모르면 관리자도 서버에서 내용을 읽을 수 없다. 글쓰기·수정은 관리자만.
- */
-import React, { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '@/lib/auth';
-import { getSetting, setSetting, onSettingChange } from '@/lib/settingStore';
-import { lockBody, unlockBody, PostLock } from '@/lib/postLock';
-import { newId } from '@/lib/postStore';
-import { KInput, KTextarea, KDate } from '@/components/ui/Kit';
-import { Modal, useConfirmDelete } from '@/components/ui/Modal';
-import { useToast } from '@/components/ui/Toast';
-
-const KEY = 'ohome.couple.v1';
-const PW_KEY = 'ohome.couple.pw';   // 이 탭에서만 기억 — 창을 닫으면 다시 묻는다
-const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-interface Entry { id: string; date: string; title: string; body: string; author: 0 | 1; read: boolean; photos?: string[] }
-interface Diary {
-  names: [string, string]; notice: string; since: string; entries: Entry[];
-  photo?: string;      // 대문 사진 — data URL로 암호문 안에 같이 들어간다
-  seeded?: boolean;    // 첫 글 묶음을 넣었는지
-  starterV?: number;   // 첫 글 묶음 판
-}
-
-const pad = (n: number) => String(n).padStart(2, '0');
-const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const fmt = (s: string) => s.replace(/-/g, '.');
-
-const EMPTY: Diary = { names: ['모찌피치', '모찌피치킬러'], notice: '', since: ymd(new Date()), entries: [] };
-
-/* 첫 글 묶음 — 관리자가 처음 열 때 한 번만 암호문 안으로 옮긴다(seeded).
-   사진 원본(public/deco/couple)은 옮겨진 뒤 저장소에서 지운다 */
-const STARTER_PHOTO = '/deco/couple/main.jpg';
-const STARTER_NOTICE = '이번주말 바다보러 가기 ♡';
-const STARTER_SINCE = '2025-12-25';
-// 모찌피치는 상대를 「지훈이」, 모찌피치킬러는 「현준이 / 현준이형 / 현준상」이라고 부른다
-// v: 이 글이 처음 들어간 판 — 그 판보다 오래된 다이어리에만 새로 더한다
-type Seed = Omit<Entry, 'id' | 'photos'> & { v: number; photoSrc?: string };
 const STARTER: Seed[] = [
-  { v: 1, date: '2026-10-01', author: 0, read: true, title: 'ㅇr..오늘은 쫌 우울한날..★',
-    body: 'ㄴr는 ㄱr끔 눈물을 흘린ㄷr...\n\n그치만 오늘은 아니야 ㅋㅋㅋ\n지훈이가 편의점에서 내가 좋아하는 바나나우유 사왔다 ♡\n빨대까지 꽂아서 줌.. 감동 ㅠ_ㅠ\n\n◆ 오늘의 BGM : 버즈 - 겁쟁이' },
-  { v: 1, date: '2026-10-03', author: 1, read: true, title: '안전벨트는 내가 매준다 -_-+',
-    body: '차 타자마자 현준이형 벨트 안 매고 딴짓하길래\n내가 직접 매줬다\n\n싫다고 버둥대는거 완전 웃김 ㅋㅋㅋㅋ\n그래도 안전이 최고니까~\n\n현준상 앞으로도 쭉 내가 매줄거임 ㅡ_ㅡv' },
-  { v: 1, date: '2026-10-05', author: 0, read: false, title: '지훈이 이 나쁜넘아 ㅠ_ㅠ',
-    body: '지훈이 너 벨트 매주는척 하면서 간지럼 태우는거 다 알거든?!\n\n사진 찍힌거 보니까 내 표정 진짜 웃기다...\n이거 대문사진 할까 말까..★\n\n...한다 ㅋㅋ 이미 함 ^^v' },
-  { v: 1, date: '2026-10-08', author: 1, read: true, title: '[스크랩] 사랑은... 버스정류장 같은거래',
-    body: '사랑은 버스 같은 거래\n놓쳐도 기다리면 또 온대\n\n근데 나는 안 기다릴래\n이미 왔으니까 ^^*\n그치 현준아?\n\n- 퍼가실때 꼭 꼬릿말 남겨주세요 -' },
-  { v: 1, date: '2026-10-10', author: 0, read: true, title: '도토리 다 써버렸다..',
-    body: '새 배경음악 사려고 도토리 충전했는데\n지훈이 홈피 스킨 바꿔주느라 다 썼다 ㅋㅋ\n\n지훈아 고맙다는 말 한마디 안 하면 일촌 끊음 ㅡㅡ+\n\n…농담이야 ♡' },
-  { v: 1, date: '2026-10-12', author: 1, read: false, title: '오늘도 수고했어',
-    body: '끝나고 지쳐서 차에서 바로 잠든 현준이형..\n어깨 빌려준 거 기억 안 나지?\n\n현준상 내일도 옆자리는 내가 찜 ♡\n\n◆ 오늘의 BGM : 프리스타일 - Y' },
-  // v3 — 사진 글
-  { v: 3, date: '2026-09-20', author: 1, read: true, title: '손장난 금지 (근데 내가 함)', photoSrc: '/deco/couple/p1.jpg',
-    body: '현준이형 손이 너무 작아서 자꾸 만지게 됨 ㅋㅋ\n형은 핸드크림 바르는 중이었는데\n내가 옆에서 다 뺏어 바름 -_-v\n\n같은 맨투맨 입으니까 커플티 같다고 다들 놀림..\n싫진 않음 ♡\n\n현준상 손 차가우면 말해 내가 녹여줌' },
-  { v: 3, date: '2026-09-27', author: 0, read: true, title: '안아줘..★', photoSrc: '/deco/couple/p2.jpg',
-    body: '대기실 나가는데 지훈이가 문 앞에 서있길래\n팔 쫙 벌렸더니 웃기만 하고 안 옴 ㅡㅡ\n\n끝까지 버티다가 결국 안겨줌 ㅋㅋㅋ\n옆에서 마스코트도 다 봤다.. 부끄럽ㄷr..\n\n지훈아 다음엔 바로 와라 -_-+\n\n◆ 오늘의 BGM : SG워너비 - 내사람' },
-  { v: 3, date: '2026-10-07', author: 0, read: false, title: '어깨 좀 빌릴게 (_ _)zZ', photoSrc: '/deco/couple/p3.jpg',
-    body: '공항에서 기다리는데 너무 졸려서\n지훈이 어깨에 턱 올려놓음 ㅋㅋ\n지훈이는 천장만 보고 있음.. 뭐 생각했냐 너\n\n빨간 후드 맞춰입은거 우리 진짜 쌍둥이같다~\n\n사진 찍어주신 분 감사합니다 ^^*\n이 사진 평생 간직할거임 ♡' },
-  // v4 — 사진 글에 상대가 남긴 답 일기 (사진 없음)
-  { v: 4, date: '2026-09-20', author: 0, read: true, title: '내 핸드크림 돌려줘 ㅡㅡ',
-    body: '지훈이가 내 핸드크림 반 통을 혼자 다 씀..\n새로 사놔라 ㅡㅡ+\n\n근데 손 잡고 있으니까 따뜻하긴 하더라..\n그래서 내일도 크림 바를 예정 ^^;\n\n맨투맨 맞춰입은거 아니라고 몇 번 말했냐 ㅋㅋ' },
-  { v: 4, date: '2026-09-27', author: 1, read: false, title: '일부러 버틴거임 ㅋ',
-    body: '현준이형 팔 벌리고 서있는거 너무 귀여워서\n일부러 안 감 ㅋㅋㅋ\n\n표정 점점 시무룩해지는거 보고 바로 감..\n현준상 삐지면 안 됨 ♡\n\n근데 마스코트가 형 보고 웃는거 같았음.. 질투남 -_-' },
-  { v: 4, date: '2026-10-07', author: 1, read: true, title: '천장 본 이유',
-    body: '현준이가 어깨에 턱 올리고 자길래\n움직이면 깰까봐 천장만 봤다 ㅋㅋ\n목 아파 죽는줄..\n\n그래도 현준이형 숨소리 들려서 좋았음 ♡\n\n다음엔 내가 기댈 차례임 ㅡ_ㅡv' },
+  { v: 5, date: "2025-12-25", author: 1, read: true, title: "오늘부터 1일 ♡♡♡",
+    body: "크리스마스에 고백하는 거 유치하다고 했던 사람 누구?\n현준이형이 먼저 했음 ㅋㅋㅋㅋ\n\n나는 그냥 케이크 먹으러 간 건데\n형이 포크 내려놓더니 진지하게 '지훈아' 하길래\n혼나는 줄 알았잖아;;\n\n대답 너무 빨리 해서 쪽팔림..\n그래도 오늘부터 1일 ♡\n현준상 사랑해~ 이건 평생 박제다 -_-v\n\n◆ 오늘의 BGM : 성시경 - 거리에서" },
+  { v: 5, date: "2025-12-25", author: 0, read: true, title: "1일",
+    body: "지훈이가 다이어리를 같이 쓰자고 했다. 싸이월드 감성이라나.\n\n오늘 고백은 사실 한 달 전부터 정해둔 거였는데\n막상 마주 앉으니까 준비한 말이 하나도 생각나지 않았다.\n이름만 부르고 한참 가만히 있었는데\n지훈이가 먼저 '응' 해줬다.\n\n고마워. 잘할게." },
+  { v: 5, date: "2026-01-01", author: 1, read: true, title: "새해 첫 일기 ★彡",
+    body: "♥ 2026 소원 ♥\n1. 현준이형이랑 안 싸우기\n2. 형이 까주는 귤 받아먹기\n3. 형 나보다 먼저 자지 않기 (맨날 먼저 잠 ㅡㅡ)\n\n형한테 소원 뭐 빌었냐니까 비밀이래\n치사해!!!\n근데 웃는 거 보니까 내 얘기인 듯 ㅋ" },
+  { v: 5, date: "2026-01-02", author: 0, read: false, title: "비밀이라고 한 소원",
+    body: "지훈이가 계속 물어봐서 여기에만 적어둔다.\n\n지훈이가 올해는 덜 아팠으면.\n밥 거르지 않았으면.\n그리고 이 다이어리가 오래 이어졌으면.\n\n…읽고 나서 놀리지 마." },
+  { v: 5, date: "2026-02-14", author: 1, read: true, title: "발렌타인인데요?",
+    body: "초콜릿 만들다가 냄비 태움\n현준이형이 와서 조용히 창문 열고 같이 다시 만들어줌 ㅋㅋㅋ\n형 손이 나보다 훨씬 야무짐.. 배신감..\n\n결국 형이 만든 거 형한테 줌\n'이거 내가 만든 거잖아' 하길래\n'내 사랑은 들어갔잖아~' 함 ㅋ\n형 귀 빨개진 거 다 봤다 ^^*" },
+  { v: 5, date: "2026-03-09", author: 0, read: true, title: "감기",
+    body: "지훈이 열이 38도까지 올랐다.\n괜찮다고 연습 나가겠다는 걸 겨우 눕혔다.\n\n죽을 끓여줬더니 싱겁다고 투덜대면서 두 그릇을 먹었다.\n자기 전에는 '형 옮으면 안 되니까 저리 가' 하면서\n내 소매는 끝까지 놓지 않더라.\n\n빨리 나아라." },
+  { v: 5, date: "2026-04-11", author: 1, read: false, title: "서운해",
+    body: "요즘 형 너무 바쁨\n연락도 '응' '그래' '자라'\n세 글자 넘는 답장 본 지가 언제인지 모르겠음\n\n나만 좋아하는 것 같다\n\n…이렇게 쓰면 형이 보겠지\n보고 연락해 ㅡㅡ" },
+  { v: 5, date: "2026-04-12", author: 0, read: true, title: "미안해",
+    body: "읽었어.\n바빴다는 건 핑계가 안 되는 거 알아.\n지훈이는 투정처럼 말해도, 진짜 서운할 때는 꼭 이렇게 글로 남기더라.\n\n오늘 저녁에 얼굴 보고 다시 말할게." },
+  { v: 5, date: "2026-05-03", author: 1, read: false, title: "그만하자",
+    body: "오늘 싸웠다\n누가 먼저 그만하자고 했는지 기억 안 남\n아니 사실 나임\n\n형은 끝까지 화를 안 냈다\n그게 더 화났음\n'지훈이가 그게 맞다고 생각하면' 이러는데\n왜 안 잡아\n\n잡아주길 바랐던 건 나만 아는 걸로." },
+  { v: 5, date: "2026-05-04", author: 0, read: false, title: ".",
+    body: "지훈이가 원하는 걸 들어주는 게 맞다고 생각했다.\n\n그런데 집에 와서 보니 칫솔이 두 개다.\n\n당분간은 이 다이어리를 열지 않으려고 한다." },
+  { v: 5, date: "2026-05-20", author: 1, read: false, title: "ㄴr는 ㄱr끔..",
+    body: "ㄴr는 ㄱr끔 눈물을 흘린ㄷr...\n웃기려고 쓰던 말인데 지금은 하나도 안 웃김\n\n다이어리 비번 아직 안 바꿨네 형\n\n◆ 오늘의 BGM : 버즈 - 가시" },
+  { v: 5, date: "2026-06-08", author: 1, read: false, title: "형 생일",
+    body: "생일 축하해 현준이형\n\n선물 샀는데 못 줬음\n문 앞까지 갔다가 그냥 돌아옴\n형이 좋아하는 그 향수\n\n미역국은 챙겨 먹었으려나\n안 먹었겠지 맨날 까먹으니까" },
+  { v: 5, date: "2026-06-09", author: 0, read: true, title: "문 앞에 있던 쇼핑백",
+    body: "아침에 문 앞에 쇼핑백이 놓여 있었다.\n카드는 없었지만 누군지 바로 알았다.\n지훈이는 리본을 꼭 두 번 묶는다.\n\n미역국은 먹었어.\n네가 끓여주던 것보다는 맛없었지만.\n\n…다이어리를 다시 열었다." },
+  { v: 5, date: "2026-06-14", author: 1, read: true, title: "다시 1일 !!!",
+    body: "형한테 전화 옴\n'향수 고마워. 근데 이거 같이 쓰자고 산 거잖아'\n\n나 울었음 그냥 다 울었음 ㅠㅠㅠ\n한 시간 통화하면서 둘 다 미안하다는 말만 백 번 함\n\n다시 1일!!!!!!!\n이번엔 내가 먼저 그만하자는 말 절대 안 함\n약속 ★ 새끼손가락 걸었음 (전화로)\n\n현준아 사랑해~ 많이 많이\n\n◆ 오늘의 BGM : 김동률 - 다시 사랑한다 말할까" },
+  { v: 5, date: "2026-06-15", author: 0, read: true, title: "다시",
+    body: "어제 지훈이가 전화로 새끼손가락을 걸자고 했다.\n어떻게 거냐고 물었더니 '마음으로' 란다.\n\n이번에는 내가 먼저 잡을게.\n네가 서운하다고 쓰기 전에 먼저 물어볼게.\n\n돌아와줘서 고마워, 지훈아." },
+  { v: 5, date: "2026-07-21", author: 1, read: true, title: "날짜 어떻게 세?",
+    body: "재결합하면 날짜 새로 세야 하나 고민함\n형이 그냥 처음부터 이어서 세재\n떨어져 있던 날들도 우리 거라고\n\n…형 이런 말 어디서 배워옴? ㅡ_ㅡ\n심쿵사 하는 줄\n그래서 만남 날짜 안 바꿈 ♡" },
+  { v: 5, date: "2026-08-15", author: 0, read: true, title: "바다",
+    body: "공지에 적어뒀던 바다를 드디어 갔다.\n지훈이는 발만 담근다더니 결국 허리까지 젖었다.\n수건이 하나뿐이라 둘이 나눠 썼다.\n\n돌아오는 차에서 지훈이가 내 어깨에 기대 잠들었다.\n휴게소를 두 군데나 그냥 지나쳤다." },
+  { v: 5, date: "2026-09-20", author: 1, read: true, title: "손장난 금지 (근데 내가 함)", photoSrc: "/deco/couple/p1.jpg",
+    body: "현준이형 손이 너무 작아서 자꾸 만지게 됨 ㅋㅋ\n형은 핸드크림 바르는 중이었는데\n내가 옆에서 다 뺏어 바름 -_-v\n\n같은 맨투맨 입으니까 커플티 같다고 다들 놀림..\n싫진 않음 ♡\n\n현준상 손 차가우면 말해 내가 녹여줌" },
+  { v: 5, date: "2026-09-20", author: 0, read: true, title: "핸드크림 반 통",
+    body: "지훈이가 내 핸드크림을 반 통이나 썼다.\n그러고는 손이 차다고 내 손을 계속 붙잡고 있었다.\n\n크림은 또 사면 된다.\n대신 내일도 손 시리면 말해." },
+  { v: 5, date: "2026-09-27", author: 0, read: true, title: "기다리는 동안", photoSrc: "/deco/couple/p2.jpg",
+    body: "대기실 앞에서 지훈이를 기다렸다.\n팔을 벌렸더니 한참 웃기만 하고 오지 않더라.\n결국 와서 안기면서 '형 이런 거 어디서 배웠어' 한다.\n\n너한테 배웠지.\n\n◆ 오늘의 BGM : SG워너비 - 내사람" },
+  { v: 5, date: "2026-09-27", author: 1, read: false, title: "일부러 버틴거임 ㅋ",
+    body: "현준이형 팔 벌리고 서있는 거 너무 귀여워서\n일부러 안 감 ㅋㅋㅋ\n\n표정 점점 시무룩해지는 거 보고 바로 감..\n현준상 삐지면 안 됨 ♡\n\n근데 옆에 마스코트가 형 보고 웃는 것 같았음.. 질투남 -_-" },
+  { v: 5, date: "2026-10-01", author: 0, read: true, title: "바나나우유",
+    body: "지훈이가 편의점에서 바나나우유를 사 왔다.\n빨대까지 꽂아서 건네주더라.\n\n내가 좋아하는 걸 나보다 더 잘 기억하는 사람.\n\n◆ 오늘의 BGM : 이적 - 다행이다" },
+  { v: 5, date: "2026-10-03", author: 1, read: true, title: "안전벨트는 내가 매준다 -_-+",
+    body: "차 타자마자 현준이형 벨트 안 매고 딴짓하길래\n내가 직접 매줬다\n\n싫다고 버둥대는 거 완전 웃김 ㅋㅋㅋㅋ\n그래도 안전이 최고니까~\n\n현준상 앞으로도 쭉 내가 매줄거임 ㅡ_ㅡv" },
+  { v: 5, date: "2026-10-05", author: 0, read: false, title: "대문사진",
+    body: "안전벨트를 매준다면서 간지럼을 태워서 표정이 저렇게 찍혔다.\n지훈이가 그 사진을 대문에 걸겠다고 해서 그러라고 했다.\n\n사진 속 지훈이가 너무 즐거워 보여서 말릴 수가 없었다." },
+  { v: 5, date: "2026-10-07", author: 0, read: true, title: "공항", photoSrc: "/deco/couple/p3.jpg",
+    body: "공항에서 기다리다 졸려서 지훈이 어깨에 기댔다.\n지훈이는 꼼짝도 안 하고 천장만 보고 있었다고 한다.\n\n빨간 후드는 지훈이가 맞춰 입자고 했다.\n이 사진은 오래 간직하고 싶다." },
+  { v: 5, date: "2026-10-07", author: 1, read: true, title: "천장 본 이유",
+    body: "현준이형이 어깨에 턱 올리고 자길래\n움직이면 깰까봐 천장만 봤다 ㅋㅋ\n목 아파 죽는 줄..\n\n그래도 형 숨소리 들려서 좋았음 ♡\n\n다음엔 내가 기댈 차례임 ㅡ_ㅡv" },
+  { v: 5, date: "2026-10-08", author: 1, read: true, title: "[스크랩] 사랑은... 버스정류장 같은거래",
+    body: "사랑은 버스 같은 거래\n놓쳐도 기다리면 또 온대\n\n근데 나는 안 기다릴래\n한 번 놓쳐봐서 앎\n이번엔 꽉 붙잡고 탔으니까 ^^*\n그치 현준아?\n\n- 퍼가실 때 꼭 꼬릿말 남겨주세요 -" },
+  { v: 5, date: "2026-10-10", author: 0, read: true, title: "도토리",
+    body: "지훈이 홈피 스킨이 마음에 안 든다길래 도토리를 털어서 새로 바꿔줬다.\n고맙다는 말 대신 '형 센스 구려~' 하더니\n하루에 다섯 번씩 들어가서 보고 있는 거 안다." },
+  { v: 5, date: "2026-10-12", author: 1, read: false, title: "오늘도 수고했어",
+    body: "끝나고 지쳐서 차에서 바로 잠든 현준이형..\n어깨 빌려준 거 기억 안 나지?\n\n형 나 없으면 어떡할래~\n현준상 내일도 옆자리는 내가 찜 ♡\n사랑해 사랑해 사랑해\n\n◆ 오늘의 BGM : 프리스타일 - Y" },
+  { v: 5, date: "2026-10-13", author: 0, read: false, title: "사실은",
+    body: "어깨 빌려준 거 기억해.\n깨어 있었는데 자는 척했어.\n\n나도 사랑해, 지훈아." },
 ];
-/** 첫 글 묶음 판 — 2: 서로 부르는 이름 반영 / 3: 사진 글 3개 / 4: 사진 글에 상대가 쓴 답 일기 */
-const STARTER_V = 4;
-const OLD_TITLES: Record<string, string> = { '2026-10-05': '킬러 이 나쁜넘아 ㅠ_ㅠ' };
+/** 첫 글 묶음 판 — 5: 두 사람 말투(연상 온화 / 연하 투정)에 맞춘 전체 개정 + 헤어졌다 다시 만난 이야기 */
+const STARTER_V = 5;
+/** 예전 판들이 넣은 글 제목 — 이 제목의 글은 새 판으로 통째로 바꾼다(직접 쓴 글은 그대로) */
+const PREV_TITLES = new Set(["[스크랩] 사랑은... 버스정류장 같은거래", "ㅇr..오늘은 쫌 우울한날..★", "내 핸드크림 돌려줘 ㅡㅡ", "도토리 다 써버렸다..", "손장난 금지 (근데 내가 함)", "안아줘..★", "안전벨트는 내가 매준다 -_-+", "어깨 좀 빌릴게 (_ _)zZ", "오늘도 수고했어", "일부러 버틴거임 ㅋ", "지훈이 이 나쁜넘아 ㅠ_ㅠ", "천장 본 이유", "킬러 이 나쁜넘아 ㅠ_ㅠ"]);
 
 async function toDataUrl(src: string): Promise<string | undefined> {
   try {
@@ -87,21 +79,11 @@ async function seedEntry(x: Seed): Promise<Entry> {
   return { ...rest, id: newId(), ...(photo ? { photos: [photo] } : {}) };
 }
 
-/** 이미 넣은 다이어리를 새 판으로 — 고친 문장은 바꾸고, 새 글은 더한다(직접 쓴 글은 그대로) */
+/** 이미 넣은 다이어리를 새 판으로 — 예전 첫 글 묶음은 빼고 새 묶음으로 바꾼다(직접 쓴 글은 그대로) */
 async function upgradeStarter(d: Diary): Promise<Diary> {
-  const from = d.starterV ?? 1;
-  if (from >= STARTER_V) return d;
-  let entries = d.entries;
-  if (from < 2) {
-    entries = entries.map(e => {
-      const st = STARTER.find(x => x.v === 1 && x.date === e.date && x.author === e.author
-        && (x.title === e.title || OLD_TITLES[x.date] === e.title));
-      return st ? { ...e, title: st.title, body: st.body } : e;
-    });
-  }
-  const add = STARTER.filter(x => x.v > from
-    && !entries.some(e => e.date === x.date && e.author === x.author && e.title === x.title));
-  return { ...d, entries: [...entries, ...await Promise.all(add.map(seedEntry))], starterV: STARTER_V };
+  if ((d.starterV ?? 1) >= STARTER_V) return d;
+  const mine = d.entries.filter(e => !PREV_TITLES.has(e.title));
+  return { ...d, entries: [...mine, ...await Promise.all(STARTER.map(seedEntry))], starterV: STARTER_V };
 }
 
 /** 첫 글 묶음·사진·공지를 채운다 — 이미 쓴 글은 그대로 두고 뒤에 더한다 */
