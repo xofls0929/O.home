@@ -4,7 +4,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMainStore } from '@/lib/mainStore';
 
-interface Prize { id: string; img: string; name: string; weight: number }
+interface Prize { id: string; img: string; name: string; weight: number; shiny?: boolean }
 // 포켓몬을 늘리려면 public/deco/gacha/ 에 GIF를 넣고 여기에 한 줄 추가
 // 이브이 진화체 · 1~6세대 스타팅은 pokestats.gg의 5세대(블랙·화이트) 움직이는 스프라이트
 const PRIZES: Prize[] = [
@@ -38,6 +38,9 @@ const PRIZES: Prize[] = [
   { id: 'chespin', img: '/deco/gacha/chespin.gif', name: '도치마론', weight: 1 },
   { id: 'fennekin', img: '/deco/gacha/fennekin.gif', name: '푸호꼬', weight: 1 },
   { id: 'froakie', img: '/deco/gacha/froakie.gif', name: '개구마르', weight: 1 },
+  // 이로치 — 일반의 1/4 확률
+  { id: 'eevee-shiny', img: '/deco/gacha/eevee-shiny.gif', name: '이브이', weight: 0.25, shiny: true },
+  { id: 'pachirisu-shiny', img: '/deco/gacha/pachirisu-shiny.gif', name: '파치리스', weight: 0.25, shiny: true },
 ];
 const MACHINE = '/deco/gacha/machine.png';
 const TURN_GIF = '/deco/gacha/machine-turn.gif';   // 한 번만 재생 — 다이얼이 돌고 볼이 오른쪽 아래로 굴러 나온다
@@ -131,13 +134,14 @@ export function GachaWidget() {
       <p className="gacha-hint">{phase === 'turning' ? '드르륵…' : '기계를 눌러 오늘의 포켓몬을 뽑아 보세요'}</p>
 
       {phase === 'open' && prize && (
-        <div className="gacha-reveal" onClick={close}>
+        <div className={`gacha-reveal${prize.shiny ? ' shiny' : ''}`} onClick={close}>
           <div className="gacha-halves">
             <i className="h-top" /><i className="h-bot" />
           </div>
           <p className="gacha-tada">짜잔!<br /><span>오늘의 포켓몬</span></p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={prize.img} alt={prize.name} draggable={false} />
+          {prize.shiny && <span className="gacha-shiny">✨ 이로치 ✨</span>}
           <strong>{prize.name}</strong>
           <small>누르면 닫혀요</small>
         </div>
