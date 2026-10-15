@@ -44,7 +44,7 @@ const PRIZES: Prize[] = [
 ];
 const MACHINE = '/deco/gacha/machine.png';
 const TURN_GIF = '/deco/gacha/machine-turn.gif';   // 한 번만 재생 — 다이얼이 돌고 볼이 오른쪽 아래로 굴러 나온다
-const TURN_MS = 4300;
+const TURN_MS = 4900;   // 다이얼(0.6~2.3초) → 볼 배출(2.5초) → 굴러 나가 사라짐(4.8초)
 const DEX_KEY = 'ohome.gacha.dex';
 
 /* 효과음 — 파일 없이 짧게 합성 */
@@ -104,10 +104,10 @@ export function GachaWidget() {
     const p = pick();
     setPrize(p);
     // 드르륵 — 다이얼 톱니, 볼이 떨어지고 굴러 나오는 소리
-    for (let i = 0; i < 8; i++) later(150 + i * 120, () => sfx(() => tone(900 + Math.random() * 300, 0.04, 'square', 0.05)));
-    later(1750, () => sfx(() => tone(260, 0.16, 'triangle', 0.25, 110)));
-    later(2500, () => sfx(() => tone(200, 0.12, 'triangle', 0.18, 90)));
-    later(3100, () => sfx(() => tone(180, 0.1, 'triangle', 0.12, 80)));
+    for (let i = 0; i < 13; i++) later(650 + i * 130, () => sfx(() => tone(900 + Math.random() * 300, 0.04, 'square', 0.05)));
+    later(2550, () => sfx(() => tone(260, 0.16, 'triangle', 0.25, 110)));
+    later(3050, () => sfx(() => tone(200, 0.12, 'triangle', 0.18, 90)));
+    later(3550, () => sfx(() => tone(180, 0.1, 'triangle', 0.12, 80)));
     later(TURN_MS, () => open(p));
   };
 
