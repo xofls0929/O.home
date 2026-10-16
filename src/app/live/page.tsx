@@ -89,7 +89,15 @@ const focusChamps = (r: Rec) => {
 };
 
 /* ---------- 챔피언 아이콘 (Data Dragon) ---------- */
-interface Champs { ver: string; idOf: Map<string, string>; names: string[] }
+interface Champ { id: string; name: string; key: string; cho: string }   // key: 공백 뺀 이름, cho: 초성
+interface Champs { ver: string; list: Champ[] }
+const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+const choOf = (t: string) => Array.from(t).map(ch => {
+  const c = ch.charCodeAt(0) - 0xac00;
+  return c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : ch;
+}).join('');
+const norm = (t: string) => t.replace(/[\s'.]/g, '').toLowerCase();
+
 let champsP: Promise<Champs> | null = null;
 function loadChamps(): Promise<Champs> {
   if (!champsP) {
@@ -97,13 +105,11 @@ function loadChamps(): Promise<Champs> {
       const ver = ((await (await fetch('https://ddragon.leagueoflegends.com/api/versions.json')).json()) as string[])[0];
       const data = (await (await fetch(`https://ddragon.leagueoflegends.com/cdn/${ver}/data/ko_KR/champion.json`)).json())
         .data as Record<string, { id: string; name: string }>;
-      const idOf = new Map<string, string>();
-      for (const c of Object.values(data)) {
-        idOf.set(c.name.replace(/\s/g, ''), c.id);
-        idOf.set(c.id.toLowerCase(), c.id);
-      }
-      return { ver, idOf, names: Object.values(data).map(c => c.name).sort((a, b) => a.localeCompare(b, 'ko')) };
-    })().catch(() => { champsP = null; return { ver: '', idOf: new Map(), names: [] }; });
+      const list = Object.values(data)
+        .map(c => ({ id: c.id, name: c.name, key: norm(c.name), cho: choOf(norm(c.name)) }))
+        .sort((x, y) => x.name.localeCompare(y.name, 'ko'));
+      return { ver, list };
+    })().catch(() => { champsP = null; return { ver: '', list: [] }; });
   }
   return champsP;
 }
@@ -112,13 +118,78 @@ function useChamps() {
   useEffect(() => { void loadChamps().then(setC); }, []);
   return c;
 }
+/** 입력한 글자에 맞는 챔피언들 — 한글 이름 · 영어 이름 · 초성(ㄹㅂㄹ) 모두 */
+function matchChamps(c: Champs | null, q: string): Champ[] {
+  const n = norm(q);
+  if (!c || !n) return [];
+  const exact = c.list.filter(x => x.key === n || x.id.toLowerCase() === n);
+  const starts = c.list.filter(x => !exact.includes(x)
+    && (x.key.startsWith(n) || x.id.toLowerCase().startsWith(n) || x.cho.startsWith(n)));
+  const has = c.list.filter(x => !exact.includes(x) && !starts.includes(x)
+    && (x.key.includes(n) || x.cho.includes(n)));
+  return [...exact, ...starts, ...has];
+}
+/** 이름 하나를 챔피언 하나로 — 딱 맞거나, 후보가 하나뿐이면 그걸로 */
+function resolveChamp(c: Champs | null, q: string): Champ | null {
+  const m = matchChamps(c, q);
+  if (!m.length) return null;
+  const n = norm(q);
+  if (m[0].key === n || m[0].id.toLowerCase() === n) return m[0];
+  return m.length === 1 || n.length >= 2 ? m[0] : null;
+}
+const iconUrl = (c: Champs, x: Champ) => `https://ddragon.leagueoflegends.com/cdn/${c.ver}/img/champion/${x.id}.png`;
+
 function ChampIcon({ name, size = 40, champs }: { name: string; size?: number; champs: Champs | null }) {
-  const id = name ? champs?.idOf.get(name.replace(/\s/g, '')) ?? champs?.idOf.get(name.toLowerCase()) : undefined;
-  if (id && champs?.ver) {
+  const x = name ? resolveChamp(champs, name) : null;
+  if (x && champs?.ver) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img className="lv-ch" src={`https://ddragon.leagueoflegends.com/cdn/${champs.ver}/img/champion/${id}.png`} alt={name} title={name} style={{ width: size, height: size }} />;
+    return <img className="lv-ch" src={iconUrl(champs, x)} alt={x.name} title={x.name} style={{ width: size, height: size }} />;
   }
   return <span className="lv-ch lv-ch-ph" style={{ width: size, height: size }} title={name}>{name ? name.slice(0, 1) : ''}</span>;
+}
+
+/** 챔피언 입력칸 — 치는 대로 아이콘이 붙고, 아래에 후보가 사진과 함께 뜬다. 칸을 벗어나면 정식 이름으로 맞춰 준다 */
+function ChampInput({ value, onChange, champs, placeholder = '챔피언' }: {
+  value: string; onChange: (v: string) => void; champs: Champs | null; placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(0);
+  const cands = useMemo(() => matchChamps(champs, value).slice(0, 8), [champs, value]);
+  const cur = resolveChamp(champs, value);
+  const pick = (x: Champ) => { onChange(x.name); setOpen(false); };
+  return (
+    <div className="lv-ci">
+      {cur && champs
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img className="lv-ci-ic" src={iconUrl(champs, cur)} alt="" />
+        : <span className="lv-ci-ic ph" />}
+      <input className="k-input" value={value} placeholder={placeholder}
+        onChange={e => { onChange(e.target.value); setOpen(true); setHi(0); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => {
+          setOpen(false);
+          const x = resolveChamp(champs, value);
+          if (x && x.name !== value) onChange(x.name);
+        }, 150)}
+        onKeyDown={e => {
+          if (!open || !cands.length) return;
+          if (e.key === 'ArrowDown') { e.preventDefault(); setHi(h => Math.min(cands.length - 1, h + 1)); }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); setHi(h => Math.max(0, h - 1)); }
+          else if (e.key === 'Enter') { e.preventDefault(); pick(cands[hi]); }
+          else if (e.key === 'Escape') setOpen(false);
+        }} />
+      {open && value && cands.length > 0 && champs && (
+        <ul className="lv-ci-list">
+          {cands.map((x, i) => (
+            <li key={x.id} className={i === hi ? 'on' : ''} onMouseDown={e => { e.preventDefault(); pick(x); }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={iconUrl(champs, x)} alt="" /> {x.name}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 /* ---------- 페이지 ---------- */
@@ -215,7 +286,6 @@ function LiveInner() {
         </>}>
         {form && <LiveForm r={form} set={setForm} champs={champs} />}
       </Modal>
-      <datalist id="lv-champs">{champs?.names.map(n => <option key={n} value={n} />)}</datalist>
     </section>
   );
 }
@@ -336,7 +406,7 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
   const upSet = (i: number, fn: (s: LSet) => LSet) => up({ sets: r.sets.map((s, j) => (j === i ? fn(structuredClone(s)) : s)) });
   const s = r.sets[si];
   const num = (v: string) => (v === '' ? 0 : Number(v));
-  const champList = useMemo(() => champs?.names.length ?? 0, [champs]);
+  const champList = champs?.list.length ?? 0;
 
   return (
     <div className="lv-form">
@@ -388,15 +458,15 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
               <div className="lv-f-bans">
                 <span>밴</span>
                 {s.bans[side].map((c, i) => (
-                  <KInput key={i} list="lv-champs" value={c} placeholder="챔피언"
-                    onChange={e => upSet(si, x => { x.bans[side][i] = e.target.value; return x; })} />
+                  <ChampInput key={i} value={c} champs={champs}
+                    onChange={v => upSet(si, x => { x.bans[side][i] = v; return x; })} />
                 ))}
               </div>
               <div className="lv-f-ph"><span>선수</span><span>챔피언</span><span>K</span><span>D</span><span>A</span><span>골드(K)</span></div>
               {s.players[side].map((p, i) => (
                 <div className="lv-f-p" key={i}>
                   <KInput value={p.name} placeholder={ROLES[i]} onChange={e => upSet(si, x => { x.players[side][i].name = e.target.value; return x; })} />
-                  <KInput list="lv-champs" value={p.champ} placeholder="챔피언" onChange={e => upSet(si, x => { x.players[side][i].champ = e.target.value; return x; })} />
+                  <ChampInput value={p.champ} champs={champs} onChange={v => upSet(si, x => { x.players[side][i].champ = v; return x; })} />
                   {(['k', 'd', 'a'] as const).map(k => (
                     <KInput key={k} type="number" min={0} value={p[k] || ''} onChange={e => upSet(si, x => { x.players[side][i][k] = num(e.target.value); return x; })} />
                   ))}

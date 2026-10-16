@@ -2052,3 +2052,12 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
   .lv-f-grid{grid-template-columns:1fr 1fr}.lv-f-teams{grid-template-columns:1fr}
   .lv-b-top{grid-template-columns:60px 1fr 60px}.lv-p{padding:6px}.lv-p-info b{font-size:12px}.lv-p-info span{font-size:10px}
 }
+/* 챔피언 입력칸 — 왼쪽에 아이콘, 아래에 사진 달린 후보 */
+.lv-ci{position:relative;min-width:0}
+.lv-ci .k-input{padding-left:32px;width:100%}
+.lv-ci-ic{position:absolute;left:5px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:5px;object-fit:cover;pointer-events:none}
+.lv-ci-ic.ph{background:#eceff2;border:1px dashed #cfd5dc}
+.lv-ci-list{position:absolute;left:0;right:0;top:calc(100% + 3px);z-index:50;margin:0;padding:4px;list-style:none;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 20px rgba(20,40,60,.15);max-height:260px;overflow:auto;min-width:150px}
+.lv-ci-list li{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:7px;font-size:12.5px;cursor:var(--cur-pointer,pointer);white-space:nowrap}
+.lv-ci-list li img{width:26px;height:26px;border-radius:5px}
+.lv-ci-list li.on,.lv-ci-list li:hover{background:#eef5fb}
