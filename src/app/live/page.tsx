@@ -19,7 +19,9 @@ import { useToast } from '@/components/ui/Toast';
 import { EditableDesc, PageTitle } from '@/components/ui/PageText';
 
 const KEY = 'ohome.live.v1';
-const CATS = ['LCK', 'MSI', '월즈', '기타'];
+const CATS = ['LCK', 'KBO', 'OWCS'];
+/** 양식이 준비된 분류 — 지금은 롤(LCK) 스코어보드만. KBO·OWCS 양식은 같이 정한 뒤에 연다 */
+const READY = ['LCK'];
 
 type Side = 'A' | 'B';
 interface P { name: string; champ: string; k: number; d: number; a: number; gold: number }   // gold: 천 단위(13.2 = 13.2K)
@@ -161,7 +163,7 @@ function LiveInner() {
                 </button>
               ))}
             </div>
-            {isAdmin && (
+            {isAdmin && READY.includes(cat) && (
               <button className="btn btn-dark" onClick={() => setForm({ ...emptyRec(), cat })}>＋ 직관 기록</button>
             )}
           </div>
@@ -191,7 +193,11 @@ function LiveInner() {
                 </button>
               );
             })}
-            {shown.length === 0 && <div className="panel lv-empty">아직 {cat} 직관 기록이 없어요</div>}
+            {shown.length === 0 && (
+              <div className="panel lv-empty">
+                {READY.includes(cat) ? `아직 ${cat} 직관 기록이 없어요` : `${cat} 직관 기록 양식은 준비 중이에요`}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -335,7 +341,7 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
   return (
     <div className="lv-form">
       <div className="lv-f-grid">
-        <label>분류<select className="k-input" value={r.cat} onChange={e => up({ cat: e.target.value })}>{CATS.map(c => <option key={c}>{c}</option>)}</select></label>
+        <label>분류<select className="k-input" value={r.cat} onChange={e => up({ cat: e.target.value })}>{CATS.filter(c => READY.includes(c) || c === r.cat).map(c => <option key={c}>{c}</option>)}</select></label>
         <label className="wide">경기명<KInput value={r.title} placeholder="2026 LCK Road to MSI 1라운드" onChange={e => up({ title: e.target.value })} /></label>
         <label>날짜<KDate value={r.date} onChange={v => up({ date: v })} /></label>
         <label>경기장<KInput value={r.venue} placeholder="LoL PARK" onChange={e => up({ venue: e.target.value })} /></label>
