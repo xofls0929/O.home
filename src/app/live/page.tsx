@@ -419,6 +419,10 @@ function SetBoard({ r, s, no, champs }: { r: Rec; s: LSet; no: number; champs: C
   // 팀마다 이 세트 최고 딜량 — 노란색으로 (자동)
   const bestOf = (side: Side) => Math.max(0, ...s.players[side].map(p => Number(p.dmg) || 0));
   const best: Record<Side, number> = { A: bestOf('A'), B: bestOf('B') };
+  // 팀마다 최고 KDA — (킬+어시)/데스, 데스 0이면 1로 나눈다 · 빨간색으로 (자동)
+  const kdaOf = (p: P) => ((Number(p.k) || 0) + (Number(p.a) || 0)) / Math.max(1, Number(p.d) || 0);
+  const bestKdaOf = (side: Side) => Math.max(0, ...s.players[side].map(kdaOf));
+  const bestKda: Record<Side, number> = { A: bestKdaOf('A'), B: bestKdaOf('B') };
   const kda = (side: Side) => `${sum(side, 'k')} / ${sum(side, 'd')} / ${sum(side, 'a')}`;
   const gold = (side: Side) => (s.gold?.[side] === '' || s.gold?.[side] == null ? '-' : `${Number(s.gold?.[side]).toFixed(1)}K`);
   const row = (p: P | undefined, side: 'b' | 'r', team: Side) => (
@@ -427,7 +431,7 @@ function SetBoard({ r, s, no, champs }: { r: Rec; s: LSet; no: number; champs: C
         <b>{p?.name || '-'}</b>
         <span>
           {p && p.dmg !== '' && <em className={Number(p.dmg) > 0 && Number(p.dmg) === best[team] ? 'best' : ''}>{p.dmg}K </em>}
-          {p ? `(${p.k || 0}/${p.d || 0}/${p.a || 0})` : ''}
+          {p && <em className={kdaOf(p) > 0 && kdaOf(p) === bestKda[team] ? 'bkda' : ''}>({p.k || 0}/{p.d || 0}/{p.a || 0})</em>}
         </span>
         <i style={{ width: `${((Number(p?.dmg) || 0) / maxDmg) * 100}%` }} />
       </div>

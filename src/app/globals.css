@@ -2090,3 +2090,4 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 
 /* 스코어보드에서 POM 선수 이름 — 진한 노랑 */
 .lv-p.pom .lv-p-info b{color:#f0a800;font-weight:900}
+.lv-p-info em.bkda{color:#d6332f;font-weight:800}   /* 팀 최고 KDA */
