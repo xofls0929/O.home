@@ -410,13 +410,17 @@ function SetBoard({ r, s, no, champs }: { r: Rec; s: LSet; no: number; champs: C
   const B = s.blue, R = other(s.blue);
   const sum = (side: Side, k: keyof P) => s.players[side].reduce((t, p) => t + (Number(p[k]) || 0), 0);
   const maxDmg = Math.max(1, ...s.players.A.map(p => Number(p.dmg) || 0), ...s.players.B.map(p => Number(p.dmg) || 0));
+  const bestDmg = maxDmg > 1 ? maxDmg : 0;   // 이 세트 최고 딜량 — 노란색으로 (자동)
   const kda = (side: Side) => `${sum(side, 'k')} / ${sum(side, 'd')} / ${sum(side, 'a')}`;
   const gold = (side: Side) => (s.gold?.[side] === '' || s.gold?.[side] == null ? '-' : `${Number(s.gold?.[side]).toFixed(1)}K`);
   const row = (p: P | undefined, side: 'b' | 'r') => (
     <div className={`lv-p ${side}${p && same(p.name, r.focus) ? ' focus' : ''}`}>
       <div className="lv-p-info">
         <b>{p?.name || '-'}</b>
-        <span>{p ? `${p.dmg !== '' ? `${p.dmg}K ` : ''}(${p.k || 0}/${p.d || 0}/${p.a || 0})` : ''}</span>
+        <span>
+          {p && p.dmg !== '' && <em className={Number(p.dmg) > 0 && Number(p.dmg) === bestDmg ? 'best' : ''}>{p.dmg}K </em>}
+          {p ? `(${p.k || 0}/${p.d || 0}/${p.a || 0})` : ''}
+        </span>
         <i style={{ width: `${((Number(p?.dmg) || 0) / maxDmg) * 100}%` }} />
       </div>
       <ChampIcon name={p?.champ ?? ''} size={44} champs={champs} />
