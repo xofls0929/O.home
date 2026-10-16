@@ -35,6 +35,8 @@ interface LSet {
   players: Record<Side, P[]>;
   obj: Record<Side, Obj>;
   gold?: Record<Side, N>;     // 팀 골드(K)
+  drakes?: { side: Side; type: Drake }[];   // 먹은 드래곤 순서대로
+  soul?: Drake | '';          // 영혼 속성 — 비우면 세 번째 드래곤 속성
   note: string;
 }
 interface Rec {
@@ -89,6 +91,48 @@ const focusChamps = (r: Rec) => {
   if (!f) return [];
   return r.sets.map(s => s.players[f].find(p => same(p.name, r.focus))?.champ ?? '').filter(Boolean);
 };
+
+/* ---------- 드래곤 ---------- */
+type Drake = 'infernal' | 'ocean' | 'cloud' | 'mountain' | 'hextech' | 'chemtech';
+const DRAKES: { id: Drake; name: string; icon: string; color: string }[] = [
+  { id: 'infernal', name: '화염', icon: '🔥', color: '#c8622c' },
+  { id: 'ocean', name: '바다', icon: '💧', color: '#3f8fb5' },
+  { id: 'cloud', name: '바람', icon: '🌪️', color: '#2f8a72' },
+  { id: 'mountain', name: '대지', icon: '⛰️', color: '#8a6a45' },
+  { id: 'hextech', name: '마법공학', icon: '⚡', color: '#3a6fd1' },
+  { id: 'chemtech', name: '화학공학', icon: '🧪', color: '#5f9a2c' },
+];
+const drakeOf = (id: string) => DRAKES.find(d => d.id === id);
+
+function DrakeDot({ type, size = 34 }: { type?: Drake; size?: number }) {
+  const d = type ? drakeOf(type) : undefined;
+  return (
+    <span className={`lv-dk${d ? '' : ' empty'}`} title={d?.name}
+      style={{ width: size, height: size, fontSize: size * 0.5, ...(d ? { background: d.color } : {}) }}>
+      {d?.icon}
+    </span>
+  );
+}
+
+/** 드래곤 줄 — 가운데 영혼, 양쪽으로 4칸씩. 먹은 순서대로 가운데부터 바깥으로 채운다 */
+function DrakeBar({ s, B, R }: { s: LSet; B: Side; R: Side }) {
+  const list = s.drakes ?? [];
+  const of = (side: Side) => list.filter(d => d.side === side).map(d => d.type).slice(0, 4);
+  const b = of(B), r = of(R);
+  const soulType = (s.soul || list[2]?.type || '') as Drake | '';
+  const soulOwner = b.length >= 4 ? 'b' : r.length >= 4 ? 'r' : '';
+  const sd = soulType ? drakeOf(soulType) : undefined;
+  return (
+    <div className="lv-dbar">
+      <div className="lv-dside b">{[3, 2, 1, 0].map(i => <DrakeDot key={i} type={b[i]} />)}</div>
+      <div className={`lv-soul ${soulOwner}`} title={sd ? `${sd.name} 영혼` : '영혼'}
+        style={sd ? { background: sd.color } : undefined}>
+        <span>{sd?.icon}</span>
+      </div>
+      <div className="lv-dside r">{[0, 1, 2, 3].map(i => <DrakeDot key={i} type={r[i]} />)}</div>
+    </div>
+  );
+}
 
 /** 예전 저장분 맞추기 — 선수 숫자가 '골드'라는 이름으로 들어 있던 걸 피해량(dmg)으로 */
 function normRec(r: Rec): Rec {
@@ -403,10 +447,11 @@ function SetBoard({ r, s, no, champs }: { r: Rec; s: LSet; no: number; champs: C
           {row(s.players[R][i], 'r')}
         </div>
       ))}
+      <DrakeBar s={s} B={B} R={R} />
       <div className="lv-b-obj">
         {(['towers', 'grubs', 'dragons', 'barons'] as (keyof Obj)[]).map(k => (
           <div key={k}>
-            <b>{s.obj[B][k]}</b><span>{{ towers: '포탑', grubs: '유충', dragons: '드래곤', barons: '바론' }[k]}</span><b>{s.obj[R][k]}</b>
+            <b>{k === 'dragons' && s.drakes?.length ? s.drakes.filter(d => d.side === B).length : s.obj[B][k]}</b><span>{{ towers: '포탑', grubs: '유충', dragons: '드래곤', barons: '바론' }[k]}</span><b>{k === 'dragons' && s.drakes?.length ? s.drakes.filter(d => d.side === R).length : s.obj[R][k]}</b>
           </div>
         ))}
       </div>
@@ -502,6 +547,36 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
               </div>
             </div>
           ))}
+          <div className="lv-f-drakes">
+            <p className="lv-f-tname">드래곤 <small>먹은 순서대로 눌러요 · 팀마다 4개까지</small></p>
+            {(['A', 'B'] as Side[]).map(side => (
+              <div key={side} className="lv-f-drow">
+                <span>{teamName(r, side)}</span>
+                {DRAKES.map(d => (
+                  <button key={d.id} type="button" title={d.name} style={{ borderColor: d.color }}
+                    disabled={(s.drakes ?? []).filter(x => x.side === side).length >= 4}
+                    onClick={() => upSet(si, x => ({ ...x, drakes: [...(x.drakes ?? []), { side, type: d.id }] }))}>
+                    {d.icon} {d.name}
+                  </button>
+                ))}
+              </div>
+            ))}
+            <div className="lv-f-dseq">
+              {(s.drakes ?? []).map((d, i) => (
+                <span key={i} className={s.blue === d.side ? 'b' : 'r'}>
+                  {i + 1}. <DrakeDot type={d.type} size={22} /> {teamName(r, d.side)}
+                  <button type="button" onClick={() => upSet(si, x => ({ ...x, drakes: (x.drakes ?? []).filter((_, j) => j !== i) }))}>✕</button>
+                </span>
+              ))}
+              {!(s.drakes ?? []).length && <small className="hint">아직 없음</small>}
+            </div>
+            <label className="lv-f-gold">영혼 속성
+              <select className="k-input" value={s.soul ?? ''} onChange={e => upSet(si, x => ({ ...x, soul: e.target.value as Drake | '' }))}>
+                <option value="">자동 (세 번째 드래곤)</option>
+                {DRAKES.map(d => <option key={d.id} value={d.id}>{d.icon} {d.name}</option>)}
+              </select>
+            </label>
+          </div>
           <label className="lv-f-note">이 세트 메모<KTextarea value={s.note} onChange={e => upSet(si, x => ({ ...x, note: e.target.value }))} /></label>
         </div>
       )}
