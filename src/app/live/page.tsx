@@ -68,6 +68,12 @@ const emptyRec = (): Rec => ({
 
 const other = (s: Side): Side => (s === 'A' ? 'B' : 'A');
 const same = (a: string, b: string) => !!a && a.trim().toLowerCase() === b.trim().toLowerCase();
+/** POM 칸에 적은 이름과 선수 이름이 맞는지 — "Oner (오공)"처럼 덧붙여 적어도 알아본다 */
+const isPom = (name: string, pom: string) => {
+  const n = name.trim().toLowerCase(), q = pom.trim().toLowerCase();
+  if (!n || !q) return false;
+  return n === q || q.split(/[\s,()/·]+/).includes(n);
+};
 const teamName = (r: Rec, s: Side) => (s === 'A' ? r.teamA : r.teamB) || (s === 'A' ? 'A팀' : 'B팀');
 
 function focusSide(r: Rec): Side | null {
@@ -416,7 +422,7 @@ function SetBoard({ r, s, no, champs }: { r: Rec; s: LSet; no: number; champs: C
   const kda = (side: Side) => `${sum(side, 'k')} / ${sum(side, 'd')} / ${sum(side, 'a')}`;
   const gold = (side: Side) => (s.gold?.[side] === '' || s.gold?.[side] == null ? '-' : `${Number(s.gold?.[side]).toFixed(1)}K`);
   const row = (p: P | undefined, side: 'b' | 'r', team: Side) => (
-    <div className={`lv-p ${side}${p && same(p.name, r.focus) ? ' focus' : ''}${p && same(p.name, r.pom) ? ' pom' : ''}`}>
+    <div className={`lv-p ${side}${p && isPom(p.name, r.pom) ? ' pom' : ''}`}>
       <div className="lv-p-info">
         <b>{p?.name || '-'}</b>
         <span>
