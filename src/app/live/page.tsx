@@ -416,7 +416,7 @@ function SetBoard({ r, s, no, champs }: { r: Rec; s: LSet; no: number; champs: C
   const kda = (side: Side) => `${sum(side, 'k')} / ${sum(side, 'd')} / ${sum(side, 'a')}`;
   const gold = (side: Side) => (s.gold?.[side] === '' || s.gold?.[side] == null ? '-' : `${Number(s.gold?.[side]).toFixed(1)}K`);
   const row = (p: P | undefined, side: 'b' | 'r', team: Side) => (
-    <div className={`lv-p ${side}${p && same(p.name, r.focus) ? ' focus' : ''}`}>
+    <div className={`lv-p ${side}${p && same(p.name, r.focus) ? ' focus' : ''}${p && same(p.name, r.pom) ? ' pom' : ''}`}>
       <div className="lv-p-info">
         <b>{p?.name || '-'}</b>
         <span>

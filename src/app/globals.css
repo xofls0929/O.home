@@ -1992,7 +1992,7 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .lv-card-vs b,.lv-head-vs>b:first-of-type{font-size:16px;font-weight:800}
 .lv-card-vs .me,.lv-head-vs .me{font-weight:800;color:#3a83cf}
 .lv-card-foot,.lv-head-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px dashed var(--line);padding-top:8px}
-.lv-pom{font-size:11.5px;color:var(--faint)}.lv-pom b{color:#3a2c00;background:#ffc400;font-size:12.5px;font-weight:800;margin-left:4px;padding:1px 8px;border-radius:999px}   /* POM — 진한 노랑 */
+.lv-pom{font-size:11.5px;color:var(--faint)}.lv-pom b{color:#f0a800;font-size:13.5px;font-weight:900;margin-left:4px}   /* POM 이름 — 진한 노랑 글씨 */
 .lv-focus{display:flex;align-items:center;gap:4px}.lv-focus small{font-size:10.5px;color:var(--faint);margin-right:2px}
 .lv-ch{border-radius:6px;object-fit:cover;display:inline-block;flex-shrink:0;border:1px solid rgba(0,0,0,.15)}
 .lv-ch-ph{background:#e6eaef;color:#8a929c;font-size:11px;display:inline-grid;place-items:center}
@@ -2033,7 +2033,7 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .lv-b-obj b{font-size:15px}.lv-b-obj div b:first-child{color:#3a83cf}.lv-b-obj div b:last-child{color:#b84a48}
 .lv-b-obj span{font-size:10.5px;color:#777}
 .lv-b-note{margin:0;padding:12px 14px;border-top:1px solid #ddd;white-space:pre-wrap;line-height:1.7}
-.lv-review{padding:20px 22px}.lv-review-pom{margin:0 0 10px;font-size:12px;color:var(--faint)}.lv-review-pom b{color:#3a2c00;background:#ffc400;font-size:14px;font-weight:800;padding:2px 10px;border-radius:999px}
+.lv-review{padding:20px 22px}.lv-review-pom{margin:0 0 10px;font-size:12px;color:var(--faint)}.lv-review-pom b{color:#f0a800;font-size:15px;font-weight:900}
 .lv-review-body{margin:0;white-space:pre-wrap;line-height:1.9;font-size:13.5px}
 .lv-form{display:grid;gap:14px}
 .lv-f-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.lv-f-grid label,.lv-f-row label,.lv-f-obj label,.lv-f-note{display:grid;gap:4px;font-size:11px;color:var(--faint)}
@@ -2088,3 +2088,6 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .lv-f-tname i{font-style:normal;font-size:11px;color:#fff;border-radius:4px;padding:1px 7px;margin-right:4px}
 .lv-f-tname.blue i{background:#3a83cf}.lv-f-tname.red i{background:#b84a48}
 .lv-f-drow>span.blue{color:#3a83cf}.lv-f-drow>span.red{color:#b84a48}
+
+/* 스코어보드에서 POM 선수 이름 — 진한 노랑 */
+.lv-p.pom .lv-p-info b{color:#f0a800;font-weight:900}
