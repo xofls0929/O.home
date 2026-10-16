@@ -2061,3 +2061,4 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .lv-ci-list li{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:7px;font-size:12.5px;cursor:var(--cur-pointer,pointer);white-space:nowrap}
 .lv-ci-list li img{width:26px;height:26px;border-radius:5px}
 .lv-ci-list li.on,.lv-ci-list li:hover{background:#eef5fb}
+.lv-f-gold{display:grid;grid-template-columns:auto 120px;gap:8px;align-items:center;font-size:11px;color:var(--faint)}

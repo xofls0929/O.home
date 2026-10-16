@@ -24,8 +24,9 @@ const CATS = ['LCK', 'KBO', 'OWCS'];
 const READY = ['LCK'];
 
 type Side = 'A' | 'B';
-interface P { name: string; champ: string; k: number; d: number; a: number; gold: number }   // gold: 천 단위(13.2 = 13.2K)
-interface Obj { towers: number; grubs: number; dragons: number; barons: number }
+type N = number | '';   // 숫자 칸 — 빈칸('')과 0을 구분한다 (0도 입력되게)
+interface P { name: string; champ: string; k: N; d: N; a: N; dmg: N; gold?: number }   // dmg: 피해량 천 단위(13.2 = 13.2K) · gold는 예전 저장분
+interface Obj { towers: N; grubs: N; dragons: N; barons: N }
 interface LSet {
   blue: Side;                 // 블루 진영 팀
   winner: Side | '';
@@ -33,6 +34,7 @@ interface LSet {
   bans: Record<Side, string[]>;
   players: Record<Side, P[]>;
   obj: Record<Side, Obj>;
+  gold?: Record<Side, N>;     // 팀 골드(K)
   note: string;
 }
 interface Rec {
@@ -47,13 +49,13 @@ interface Rec {
   review: string;
 }
 
-const emptyObj = (): Obj => ({ towers: 0, grubs: 0, dragons: 0, barons: 0 });
-const emptyP = (name = ''): P => ({ name, champ: '', k: 0, d: 0, a: 0, gold: 0 });
+const emptyObj = (): Obj => ({ towers: '', grubs: '', dragons: '', barons: '' });
+const emptyP = (name = ''): P => ({ name, champ: '', k: '', d: '', a: '', dmg: '' });
 const newSet = (r: Rec): LSet => ({
   blue: 'A', winner: '', time: '',
   bans: { A: ['', '', '', '', ''], B: ['', '', '', '', ''] },
   players: { A: r.rosterA.map(n => emptyP(n)), B: r.rosterB.map(n => emptyP(n)) },
-  obj: { A: emptyObj(), B: emptyObj() }, note: '',
+  obj: { A: emptyObj(), B: emptyObj() }, gold: { A: '', B: '' }, note: '',
 });
 const ROLES = ['탑', '정글', '미드', '원딜', '서폿'];
 const emptyRec = (): Rec => ({
@@ -87,6 +89,20 @@ const focusChamps = (r: Rec) => {
   if (!f) return [];
   return r.sets.map(s => s.players[f].find(p => same(p.name, r.focus))?.champ ?? '').filter(Boolean);
 };
+
+/** 예전 저장분 맞추기 — 선수 숫자가 '골드'라는 이름으로 들어 있던 걸 피해량(dmg)으로 */
+function normRec(r: Rec): Rec {
+  return {
+    ...r,
+    sets: r.sets.map(st => ({
+      ...st,
+      players: {
+        A: st.players.A.map(p => ({ ...p, dmg: p.dmg ?? (p.gold ? p.gold : '') })),
+        B: st.players.B.map(p => ({ ...p, dmg: p.dmg ?? (p.gold ? p.gold : '') })),
+      },
+    })),
+  };
+}
 
 /* ---------- 챔피언 아이콘 (Data Dragon) ---------- */
 interface Champ { id: string; name: string; key: string; cho: string }   // key: 공백 뺀 이름, cho: 초성
@@ -204,7 +220,7 @@ function LiveInner() {
   const [form, setForm] = useState<Rec | null>(null);
 
   useEffect(() => {
-    const load = () => setList(getSetting<Rec[]>(KEY, []));
+    const load = () => setList(getSetting<Rec[]>(KEY, []).map(normRec));
     load();
     return onSettingChange(k => { if (k === KEY) load(); });
   }, []);
@@ -348,15 +364,15 @@ function LiveDetail({ r, champs, onBack, onEdit, onDelete }: {
 function SetBoard({ r, s, no, champs }: { r: Rec; s: LSet; no: number; champs: Champs | null }) {
   const B = s.blue, R = other(s.blue);
   const sum = (side: Side, k: keyof P) => s.players[side].reduce((t, p) => t + (Number(p[k]) || 0), 0);
-  const maxGold = Math.max(1, ...s.players.A.map(p => p.gold || 0), ...s.players.B.map(p => p.gold || 0));
+  const maxDmg = Math.max(1, ...s.players.A.map(p => Number(p.dmg) || 0), ...s.players.B.map(p => Number(p.dmg) || 0));
   const kda = (side: Side) => `${sum(side, 'k')} / ${sum(side, 'd')} / ${sum(side, 'a')}`;
-  const gold = (side: Side) => `${sum(side, 'gold').toFixed(1)}K`;
+  const gold = (side: Side) => (s.gold?.[side] === '' || s.gold?.[side] == null ? '-' : `${Number(s.gold?.[side]).toFixed(1)}K`);
   const row = (p: P | undefined, side: 'b' | 'r') => (
     <div className={`lv-p ${side}${p && same(p.name, r.focus) ? ' focus' : ''}`}>
       <div className="lv-p-info">
         <b>{p?.name || '-'}</b>
-        <span>{p ? `${p.gold ? `${p.gold}K ` : ''}(${p.k}/${p.d}/${p.a})` : ''}</span>
-        <i style={{ width: `${((p?.gold || 0) / maxGold) * 100}%` }} />
+        <span>{p ? `${p.dmg !== '' ? `${p.dmg}K ` : ''}(${p.k || 0}/${p.d || 0}/${p.a || 0})` : ''}</span>
+        <i style={{ width: `${((Number(p?.dmg) || 0) / maxDmg) * 100}%` }} />
       </div>
       <ChampIcon name={p?.champ ?? ''} size={44} champs={champs} />
     </div>
@@ -405,7 +421,7 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
   const up = (p: Partial<Rec>) => set({ ...r, ...p });
   const upSet = (i: number, fn: (s: LSet) => LSet) => up({ sets: r.sets.map((s, j) => (j === i ? fn(structuredClone(s)) : s)) });
   const s = r.sets[si];
-  const num = (v: string) => (v === '' ? 0 : Number(v));
+  const num = (v: string): N => (v === '' ? '' : Number(v));
   const champList = champs?.list.length ?? 0;
 
   return (
@@ -462,21 +478,25 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
                     onChange={v => upSet(si, x => { x.bans[side][i] = v; return x; })} />
                 ))}
               </div>
-              <div className="lv-f-ph"><span>선수</span><span>챔피언</span><span>K</span><span>D</span><span>A</span><span>골드(K)</span></div>
+              <div className="lv-f-ph"><span>선수</span><span>챔피언</span><span>K</span><span>D</span><span>A</span><span>피해량(K)</span></div>
               {s.players[side].map((p, i) => (
                 <div className="lv-f-p" key={i}>
                   <KInput value={p.name} placeholder={ROLES[i]} onChange={e => upSet(si, x => { x.players[side][i].name = e.target.value; return x; })} />
                   <ChampInput value={p.champ} champs={champs} onChange={v => upSet(si, x => { x.players[side][i].champ = v; return x; })} />
                   {(['k', 'd', 'a'] as const).map(k => (
-                    <KInput key={k} type="number" min={0} value={p[k] || ''} onChange={e => upSet(si, x => { x.players[side][i][k] = num(e.target.value); return x; })} />
+                    <KInput key={k} type="number" min={0} value={p[k]} onChange={e => upSet(si, x => { x.players[side][i][k] = num(e.target.value); return x; })} />
                   ))}
-                  <KInput type="number" step="0.1" min={0} value={p.gold || ''} onChange={e => upSet(si, x => { x.players[side][i].gold = num(e.target.value); return x; })} />
+                  <KInput type="number" step="0.1" min={0} value={p.dmg} onChange={e => upSet(si, x => { x.players[side][i].dmg = num(e.target.value); return x; })} />
                 </div>
               ))}
+              <label className="lv-f-gold">팀 골드(K)
+                <KInput type="number" step="0.1" min={0} placeholder="69.0" value={s.gold?.[side] ?? ''}
+                  onChange={e => upSet(si, x => ({ ...x, gold: { ...(x.gold ?? { A: '', B: '' }), [side]: num(e.target.value) } }))} />
+              </label>
               <div className="lv-f-obj">
                 {(['towers', 'grubs', 'dragons', 'barons'] as (keyof Obj)[]).map(k => (
                   <label key={k}>{{ towers: '포탑', grubs: '유충', dragons: '드래곤', barons: '바론' }[k]}
-                    <KInput type="number" min={0} value={s.obj[side][k] || ''} onChange={e => upSet(si, x => { x.obj[side][k] = num(e.target.value); return x; })} />
+                    <KInput type="number" min={0} value={s.obj[side][k]} onChange={e => upSet(si, x => { x.obj[side][k] = num(e.target.value); return x; })} />
                   </label>
                 ))}
               </div>
