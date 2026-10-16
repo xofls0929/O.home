@@ -104,14 +104,15 @@ const DRAKES: { id: Drake; name: string; icon: string; color: string }[] = [
 ];
 const drakeOf = (id: string) => DRAKES.find(d => d.id === id);
 
+/** 게임 아이콘 — 원형(먹은 드래곤)은 영혼 문양을 원 안에 넣어 만든 것, 마름모(영혼)는 게임 속 영혼 아이콘 그대로 */
+const drakeImg = (id: Drake) => `/deco/lol/drake-${id}.png`;
+const soulImg = (id: Drake) => `/deco/lol/soul-${id}.png`;
+
 function DrakeDot({ type, size = 34 }: { type?: Drake; size?: number }) {
   const d = type ? drakeOf(type) : undefined;
-  return (
-    <span className={`lv-dk${d ? '' : ' empty'}`} title={d?.name}
-      style={{ width: size, height: size, fontSize: size * 0.5, ...(d ? { background: d.color } : {}) }}>
-      {d?.icon}
-    </span>
-  );
+  if (!d) return <span className="lv-dk empty" style={{ width: size, height: size }} />;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img className="lv-dk" src={drakeImg(d.id)} alt={d.name} title={d.name} style={{ width: size, height: size }} />;
 }
 
 /** 드래곤 줄 — 가운데 영혼, 양쪽으로 4칸씩. 먹은 순서대로 가운데부터 바깥으로 채운다 */
@@ -125,9 +126,9 @@ function DrakeBar({ s, B, R }: { s: LSet; B: Side; R: Side }) {
   return (
     <div className="lv-dbar">
       <div className="lv-dside b">{[3, 2, 1, 0].map(i => <DrakeDot key={i} type={b[i]} />)}</div>
-      <div className={`lv-soul ${soulOwner}`} title={sd ? `${sd.name} 영혼` : '영혼'}
-        style={sd ? { background: sd.color } : undefined}>
-        <span>{sd?.icon}</span>
+      <div className={`lv-soul ${soulOwner}`} title={sd ? `${sd.name} 영혼` : '영혼'}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {sd ? <img src={soulImg(sd.id)} alt={`${sd.name} 영혼`} /> : <i />}
       </div>
       <div className="lv-dside r">{[0, 1, 2, 3].map(i => <DrakeDot key={i} type={r[i]} />)}</div>
     </div>
@@ -556,7 +557,8 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
                   <button key={d.id} type="button" title={d.name} style={{ borderColor: d.color }}
                     disabled={(s.drakes ?? []).filter(x => x.side === side).length >= 4}
                     onClick={() => upSet(si, x => ({ ...x, drakes: [...(x.drakes ?? []), { side, type: d.id }] }))}>
-                    {d.icon} {d.name}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={drakeImg(d.id)} alt="" /> {d.name}
                   </button>
                 ))}
               </div>
@@ -573,7 +575,7 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
             <label className="lv-f-gold">영혼 속성
               <select className="k-input" value={s.soul ?? ''} onChange={e => upSet(si, x => ({ ...x, soul: e.target.value as Drake | '' }))}>
                 <option value="">자동 (세 번째 드래곤)</option>
-                {DRAKES.map(d => <option key={d.id} value={d.id}>{d.icon} {d.name}</option>)}
+                {DRAKES.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </label>
           </div>
