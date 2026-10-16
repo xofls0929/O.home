@@ -1978,3 +1978,77 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .gacha-shiny{font-size:11px;font-weight:800;color:#fff;background:linear-gradient(90deg,#ffb800,#ff7ab6,#7cc4f2,#ffb800);background-size:300% 100%;
   border-radius:999px;padding:2px 10px;letter-spacing:.06em;animation:gachaShine 2s linear infinite,gachaPop .45s cubic-bezier(.3,1.7,.5,1) both}
 @keyframes gachaShine{to{background-position:300% 0}}
+
+/* 직관기록 — 경기 카드 + 세트 스코어보드 (블루 #3a83cf / 레드 #b84a48) */
+.lv-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.lv-card{text-align:left;font:inherit;color:inherit;background:var(--panel,#fff);border:1.5px solid var(--line);border-radius:var(--radius,14px);padding:14px 16px;cursor:var(--cur-pointer,pointer);display:grid;gap:8px;transition:transform .15s,box-shadow .15s;border-left-width:5px}
+.lv-card.win{border-left-color:#3a83cf}.lv-card.loss{border-left-color:#b84a48}
+.lv-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,60,90,.1)}
+.lv-card-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--faint)}
+.lv-res{font-size:10.5px;font-weight:800;color:#fff;border-radius:4px;padding:2px 7px;letter-spacing:.06em}
+.lv-res.win{background:#3a83cf}.lv-res.loss{background:#b84a48}
+.lv-card-title{margin:0;font-weight:700;font-size:14px;line-height:1.35}
+.lv-card-vs,.lv-head-vs{margin:0;display:flex;align-items:center;gap:10px;font-size:13px}
+.lv-card-vs b,.lv-head-vs>b:first-of-type{font-size:16px;font-weight:800}
+.lv-card-vs .me,.lv-head-vs .me{font-weight:800;color:#3a83cf}
+.lv-card-foot,.lv-head-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px dashed var(--line);padding-top:8px}
+.lv-pom{font-size:11.5px;color:var(--faint)}.lv-pom b{color:#e0a800;font-size:13px;margin-left:3px}
+.lv-focus{display:flex;align-items:center;gap:4px}.lv-focus small{font-size:10.5px;color:var(--faint);margin-right:2px}
+.lv-ch{border-radius:6px;object-fit:cover;display:inline-block;flex-shrink:0;border:1px solid rgba(0,0,0,.15)}
+.lv-ch-ph{background:#e6eaef;color:#8a929c;font-size:11px;display:inline-grid;place-items:center}
+.lv-empty{padding:40px;text-align:center;color:var(--faint);font-size:13px;grid-column:1/-1}
+.lv-detail{display:grid;gap:12px}
+.lv-head{padding:16px 20px;display:grid;gap:8px;position:relative}
+.lv-back{position:absolute;right:16px;top:14px;background:none;border:0;font:inherit;font-size:12px;color:var(--faint);cursor:var(--cur-pointer,pointer)}
+.lv-head-meta{margin:0;font-size:11.5px;color:var(--faint)}
+.lv-head-title{margin:0;font-size:18px}
+.lv-head-acts{display:flex;gap:6px;justify-content:flex-end}.lv-head-acts .btn{padding:4px 12px;font-size:11px}
+.lv-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.lv-tabs button{font:inherit;font-size:12.5px;padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--panel,#fff);cursor:var(--cur-pointer,pointer)}
+.lv-tabs button.on{background:#1f2328;color:#fff;border-color:#1f2328}
+.lv-tabs i{font-style:normal;font-size:9px;margin-left:3px}.lv-tabs i.w{color:#3a83cf}.lv-tabs i.l{color:#b84a48}
+.lv-board{background:#fff;border:3px solid #1f2328;color:#1f2328;max-width:760px;width:100%;margin:0 auto;font-size:13px}
+.lv-b-top{display:grid;grid-template-columns:110px 1fr 110px;background:#1f2328;color:#fff;text-align:center;align-items:stretch}
+.lv-b-top p{margin:0;padding:10px;font-weight:800;font-size:15px;display:grid;gap:2px}.lv-b-top small{font-size:12px;font-weight:700}
+.lv-b-top span{display:grid;place-items:center;font-weight:800}.lv-b-top .blue{background:#3a83cf}.lv-b-top .red{background:#b84a48}
+.lv-b-teams{display:grid;grid-template-columns:1fr 1fr;text-align:center;color:#fff;font-size:15px}
+.lv-b-teams b{padding:9px}.lv-b-teams .blue{background:#3a83cf}.lv-b-teams .red{background:#b84a48}
+.lv-b-bans{display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;padding:8px;border-bottom:6px solid;border-image:linear-gradient(90deg,#3a83cf 50%,#b84a48 50%) 1}
+.lv-b-bans>div{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}.lv-b-bans>span{text-align:center;font-weight:800}
+.lv-b-sum{display:grid;grid-template-columns:1fr 100px 100px 1fr;text-align:center;border-bottom:1px solid #ddd}
+.lv-b-sum>*{padding:9px 4px;border-bottom:1px solid #eee}
+.lv-b-sum>b{grid-column:2/4;font-size:15px}
+.lv-b-sum em{font-style:normal;font-weight:800;color:#fff;background:#bbb}
+.lv-b-sum em.win{background:#3a83cf}.lv-b-sum em.loss{background:#b84a48}.lv-b-sum em.win.r{background:#3a83cf}
+.lv-b-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #eee}
+.lv-p{display:flex;align-items:center;gap:10px;padding:8px 10px}
+.lv-p.b{justify-content:flex-end;border-right:1px solid #ddd}.lv-p.r{flex-direction:row-reverse;justify-content:flex-end}
+.lv-p-info{display:grid;gap:2px;min-width:0;flex:1}.lv-p.b .lv-p-info{text-align:right;justify-items:end}
+.lv-p-info b{font-size:14px;font-weight:600}.lv-p-info span{font-size:11.5px;color:#555}
+.lv-p-info i{height:4px;display:block;background:#3a83cf;max-width:100%}.lv-p.r .lv-p-info i{background:#b84a48}
+.lv-p.focus .lv-p-info b{color:#e0a800;font-weight:800}
+.lv-b-obj{display:grid;grid-template-columns:repeat(4,1fr);background:#f2f3f5;border-top:6px solid;border-image:linear-gradient(90deg,#3a83cf 50%,#b84a48 50%) 1}
+.lv-b-obj div{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 6px;text-align:center;gap:4px}
+.lv-b-obj b{font-size:15px}.lv-b-obj div b:first-child{color:#3a83cf}.lv-b-obj div b:last-child{color:#b84a48}
+.lv-b-obj span{font-size:10.5px;color:#777}
+.lv-b-note{margin:0;padding:12px 14px;border-top:1px solid #ddd;white-space:pre-wrap;line-height:1.7}
+.lv-review{padding:20px 22px}.lv-review-pom{margin:0 0 10px;font-size:12px;color:var(--faint)}.lv-review-pom b{color:#e0a800;font-size:14px}
+.lv-review-body{margin:0;white-space:pre-wrap;line-height:1.9;font-size:13.5px}
+.lv-form{display:grid;gap:14px}
+.lv-f-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.lv-f-grid label,.lv-f-row label,.lv-f-obj label,.lv-f-note{display:grid;gap:4px;font-size:11px;color:var(--faint)}
+.lv-f-grid .wide{grid-column:span 2}
+.lv-f-teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}.lv-f-teams>div{display:grid;gap:5px}
+.lv-f-sets{display:flex;gap:6px;flex-wrap:wrap}
+.lv-f-sets button{font:inherit;font-size:12px;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line);background:#fff;cursor:var(--cur-pointer,pointer)}
+.lv-f-sets button.on{background:#1f2328;color:#fff;border-color:#1f2328}
+.lv-f-set{display:grid;gap:12px;border:1.5px dashed var(--line);border-radius:12px;padding:12px}
+.lv-f-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
+.lv-f-team{display:grid;gap:5px}.lv-f-tname{margin:0;font-weight:700;font-size:13px}.lv-f-tname small{font-weight:400;color:var(--faint)}
+.lv-f-bans{display:grid;grid-template-columns:30px repeat(5,1fr);gap:4px;align-items:center;font-size:11px}
+.lv-f-ph,.lv-f-p{display:grid;grid-template-columns:1.2fr 1.4fr .55fr .55fr .55fr .8fr;gap:4px}
+.lv-f-ph span{font-size:10.5px;color:var(--faint)}
+.lv-f-obj{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+@media (max-width:640px){
+  .lv-f-grid{grid-template-columns:1fr 1fr}.lv-f-teams{grid-template-columns:1fr}
+  .lv-b-top{grid-template-columns:60px 1fr 60px}.lv-p{padding:6px}.lv-p-info b{font-size:12px}.lv-p-info span{font-size:10px}
+}
