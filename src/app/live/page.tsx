@@ -6,7 +6,7 @@
  * 상세: 1세트 · 2세트 · … 스코어보드 + 총평
  *
  * 관리자만 쓰는 기록이라 사이트 설정 한 칸(ohome.live.v1)에 통째로 둔다 — 테이블을 새로 만들 필요가 없다.
- * 챔피언 아이콘은 라이엇 Data Dragon(한국어 이름 → 아이콘)을 쓴다.
+ * 챔피언 아이콘은 라이엇 Data Dragon(한국어 이름 → 아이콘)을 쓴다 — /api/lol 중계를 거친다.
  */
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -102,8 +102,8 @@ let champsP: Promise<Champs> | null = null;
 function loadChamps(): Promise<Champs> {
   if (!champsP) {
     champsP = (async () => {
-      const ver = ((await (await fetch('https://ddragon.leagueoflegends.com/api/versions.json')).json()) as string[])[0];
-      const data = (await (await fetch(`https://ddragon.leagueoflegends.com/cdn/${ver}/data/ko_KR/champion.json`)).json())
+      const ver = ((await (await fetch('/api/lol?p=api/versions.json')).json()) as string[])[0];
+      const data = (await (await fetch(`/api/lol?p=cdn/${ver}/data/ko_KR/champion.json`)).json())
         .data as Record<string, { id: string; name: string }>;
       const list = Object.values(data)
         .map(c => ({ id: c.id, name: c.name, key: norm(c.name), cho: choOf(norm(c.name)) }))
@@ -137,7 +137,7 @@ function resolveChamp(c: Champs | null, q: string): Champ | null {
   if (m[0].key === n || m[0].id.toLowerCase() === n) return m[0];
   return m.length === 1 || n.length >= 2 ? m[0] : null;
 }
-const iconUrl = (c: Champs, x: Champ) => `https://ddragon.leagueoflegends.com/cdn/${c.ver}/img/champion/${x.id}.png`;
+const iconUrl = (c: Champs, x: Champ) => `/api/lol?p=cdn/${c.ver}/img/champion/${x.id}.png`;   // 우리 서버를 거쳐 받는다
 
 function ChampIcon({ name, size = 40, champs }: { name: string; size?: number; champs: Champs | null }) {
   const x = name ? resolveChamp(champs, name) : null;
