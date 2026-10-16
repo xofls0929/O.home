@@ -2085,3 +2085,6 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .lv-f-dseq>span.b{border-color:#3a83cf}.lv-f-dseq>span.r{border-color:#b84a48}
 .lv-f-dseq button{border:0;background:none;cursor:var(--cur-pointer,pointer);font-size:10px;color:#888}
 @media (max-width:640px){.lv-dk{width:26px!important;height:26px!important}.lv-soul{width:56px;height:56px}.lv-soul img{width:42px;height:42px}}
+.lv-f-tname i{font-style:normal;font-size:11px;color:#fff;border-radius:4px;padding:1px 7px;margin-right:4px}
+.lv-f-tname.blue i{background:#3a83cf}.lv-f-tname.red i{background:#b84a48}
+.lv-f-drow>span.blue{color:#3a83cf}.lv-f-drow>span.red{color:#b84a48}

@@ -520,9 +520,9 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
             <button className="btn btn-ghost" onClick={() => { up({ sets: r.sets.filter((_, j) => j !== si) }); setSi(Math.max(0, si - 1)); }}>이 세트 삭제</button>
           </div>
 
-          {(['A', 'B'] as Side[]).map(side => (
+          {[s.blue, other(s.blue)].map(side => (   /* 승패와 상관없이 블루 → 레드 순서 */
             <div key={side} className="lv-f-team">
-              <p className="lv-f-tname">{teamName(r, side)} <small>{s.blue === side ? '블루' : '레드'}</small></p>
+              <p className={`lv-f-tname ${s.blue === side ? 'blue' : 'red'}`}><i>{s.blue === side ? '블루' : '레드'}</i> {teamName(r, side)}</p>
               <div className="lv-f-bans">
                 <span>밴</span>
                 {s.bans[side].map((c, i) => (
@@ -556,9 +556,9 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
           ))}
           <div className="lv-f-drakes">
             <p className="lv-f-tname">드래곤 <small>먹은 순서대로 눌러요 · 팀마다 4개까지</small></p>
-            {(['A', 'B'] as Side[]).map(side => (
+            {[s.blue, other(s.blue)].map(side => (   /* 승패와 상관없이 블루 → 레드 순서 */
               <div key={side} className="lv-f-drow">
-                <span>{teamName(r, side)}</span>
+                <span className={s.blue === side ? 'blue' : 'red'}>{teamName(r, side)}</span>
                 {DRAKES.map(d => (
                   <button key={d.id} type="button" title={d.name} style={{ borderColor: d.color }}
                     disabled={(s.drakes ?? []).filter(x => x.side === side).length >= 4}
