@@ -6,7 +6,7 @@ import { useMainStore } from '@/lib/mainStore';
 
 interface Prize { id: string; img: string; name: string; weight: number; shiny?: boolean }
 // 포켓몬을 늘리려면 public/deco/gacha/ 에 GIF를 넣고 여기에 한 줄 추가
-// 이브이 진화체 · 1~6세대 스타팅은 pokestats.gg의 5세대(블랙·화이트) 움직이는 스프라이트
+// 이브이 진화체 · 1~7세대 스타팅은 pokestats.gg의 5세대(블랙·화이트) 움직이는 스프라이트
 const PRIZES: Prize[] = [
   { id: 'pachirisu', img: '/deco/gacha/pachirisu.gif', name: '파치리스', weight: 1 },
   { id: 'skitty', img: '/deco/gacha/skitty.gif', name: '에나비', weight: 1 },
@@ -38,6 +38,9 @@ const PRIZES: Prize[] = [
   { id: 'chespin', img: '/deco/gacha/chespin.gif', name: '도치마론', weight: 1 },
   { id: 'fennekin', img: '/deco/gacha/fennekin.gif', name: '푸호꼬', weight: 1 },
   { id: 'froakie', img: '/deco/gacha/froakie.gif', name: '개구마르', weight: 1 },
+  { id: 'rowlet', img: '/deco/gacha/rowlet.gif', name: '나몰빼', weight: 1 },
+  { id: 'litten', img: '/deco/gacha/litten.gif', name: '냐오불', weight: 1 },
+  { id: 'popplio', img: '/deco/gacha/popplio.gif', name: '누리공', weight: 1 },
   { id: 'emolga', img: '/deco/gacha/emolga.gif', name: '에몽가', weight: 1 },
   { id: 'buneary', img: '/deco/gacha/buneary.gif', name: '이어롤', weight: 1 },
   { id: 'lopunny', img: '/deco/gacha/lopunny.gif', name: '이어롭', weight: 1 },
