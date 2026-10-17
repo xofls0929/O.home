@@ -57,6 +57,7 @@ const PRIZES: Prize[] = [
   { id: 'eevee-shiny', img: '/deco/gacha/eevee-shiny.gif', name: '이브이', weight: 0.25, shiny: true },
   { id: 'pachirisu-shiny', img: '/deco/gacha/pachirisu-shiny.gif', name: '파치리스', weight: 0.25, shiny: true },
   { id: 'skitty-shiny', img: '/deco/gacha/skitty-shiny.gif', name: '에나비', weight: 0.25, shiny: true },
+  { id: 'emolga-shiny', img: '/deco/gacha/emolga-shiny.gif', name: '에몽가', weight: 0.25, shiny: true },
 ];
 const MACHINE = '/deco/gacha/machine.png';
 const TURN_GIF = '/deco/gacha/machine-turn.gif';   // 한 번만 재생 — 다이얼이 돌고 볼이 오른쪽 아래로 굴러 나온다
