@@ -2091,3 +2091,35 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 /* 스코어보드에서 POM 선수 이름 — 진한 노랑 */
 .lv-p.pom .lv-p-info b{color:#f0a800;font-weight:900}
 .lv-p-info em.bkda{color:#d6332f;font-weight:800}   /* 팀 최고 KDA */
+
+/* 직관기록 OWCS — 맵 점수표 + 영웅 밴 (나무위키 경기표 느낌) */
+.ow-wrap{display:grid;gap:18px;justify-items:center}
+.ow-board{width:100%;max-width:780px;border:1px solid #c9ccd2;background:#fff;color:#1f2328}
+.ow-title{background:#384152;color:#fff;text-align:center;font-weight:800;font-size:15px;padding:12px}
+.ow-grid{display:grid}
+.ow-grid>div{display:grid;place-items:center;border-right:1px solid #c9ccd2;border-bottom:1px solid #c9ccd2;min-height:44px;text-align:center}
+.ow-corner{background:#3e4759}.ow-corner2{background:#3e4759}
+.ow-mode{background:#3e4759;color:#fff;font-weight:700;font-size:13px}
+.ow-map{background:#dcdcdc;gap:2px;padding:8px 4px}.ow-map span{font-size:22px;line-height:1}.ow-map b{font-weight:500;font-size:15px}
+.ow-team{font-weight:700;font-size:13px;padding:0 8px;min-height:62px!important}
+.ow-team.me{color:#d02b33}
+.ow-score{font-size:24px;font-weight:500}
+.ow-score.win{background:#c0272d;color:#1f2328;font-weight:800}
+.ow-total{font-size:24px;font-weight:800;color:#fff;background:#9a9a9a}
+.ow-total.win{background:#4aa8f0}
+.ow-bans{width:100%;max-width:560px;display:grid;gap:8px}
+.ow-sub{margin:0;text-align:center;font-weight:800;font-size:15px;border-bottom:3px solid #ddd;padding-bottom:8px}
+.ow-ban-grid{display:grid;align-items:center;row-gap:10px;column-gap:6px}
+.ow-setchip{justify-self:center;background:#384152;color:#fff;border-radius:6px;padding:3px 10px;font-size:13px}
+.ow-ban-label{font-size:14px;text-align:center;border-right:1px solid #ddd;align-self:stretch;display:grid;place-items:center}
+.ow-ban{display:grid;justify-items:center;gap:3px;position:relative}
+.ow-ban small{font-size:12.5px}
+.ow-tag{font-style:normal;font-size:9.5px;font-weight:800;color:#fff;background:#556070;border-radius:999px;padding:1px 6px;position:absolute;top:-2px;right:6px;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ow-tag.me{background:#d02b33}
+.ow-hero{border-radius:50%;object-fit:cover;background:#e6e9ee;display:inline-block}
+.ow-hero.ph{display:inline-grid;place-items:center;color:#9aa0a8;font-size:12px}
+.ow-notes{width:100%;max-width:780px;display:grid;gap:8px}
+.ow-notes p{margin:0;white-space:pre-wrap;line-height:1.7;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.ow-notes b{display:block;font-size:12px;color:var(--faint);margin-bottom:2px}
+.ow-f-score{grid-template-columns:1fr 1fr 1fr!important}
+@media (max-width:640px){.ow-score,.ow-total{font-size:18px}.ow-map b{font-size:12px}.ow-team{font-size:11px}}

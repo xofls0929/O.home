@@ -17,11 +17,12 @@ import { KInput, KTextarea, KDate } from '@/components/ui/Kit';
 import { Modal, useConfirmDelete } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { EditableDesc, PageTitle } from '@/components/ui/PageText';
+import { OwMap, owWins, owResult, owFocusHeroes, useHeroes, HeroIcon, OwBoard, OwForm, Hero } from './ow';
 
 const KEY = 'ohome.live.v1';
 const CATS = ['LCK', 'KBO', 'OWCS'];
 /** 양식이 준비된 분류 — 지금은 롤(LCK) 스코어보드만. KBO·OWCS 양식은 같이 정한 뒤에 연다 */
-const READY = ['LCK'];
+const READY = ['LCK', 'OWCS'];
 
 type Side = 'A' | 'B';
 type N = number | '';   // 숫자 칸 — 빈칸('')과 0을 구분한다 (0도 입력되게)
@@ -49,6 +50,8 @@ interface Rec {
   pom: string;
   sets: LSet[];
   review: string;
+  maps?: OwMap[];             // OWCS — 맵(세트)들
+  focusTeam?: Side;           // OWCS — 기준 선수 팀
 }
 
 const emptyObj = (): Obj => ({ towers: '', grubs: '', dragons: '', barons: '' });
@@ -77,6 +80,7 @@ const isPom = (name: string, pom: string) => {
 const teamName = (r: Rec, s: Side) => (s === 'A' ? r.teamA : r.teamB) || (s === 'A' ? 'A팀' : 'B팀');
 
 function focusSide(r: Rec): Side | null {
+  if (r.cat === 'OWCS') return r.focusTeam ?? null;
   if (r.rosterA.some(n => same(n, r.focus))) return 'A';
   if (r.rosterB.some(n => same(n, r.focus))) return 'B';
   for (const s of r.sets) {
@@ -85,8 +89,9 @@ function focusSide(r: Rec): Side | null {
   }
   return null;
 }
-const wins = (r: Rec, side: Side) => r.sets.filter(s => s.winner === side).length;
+const wins = (r: Rec, side: Side) => (r.cat === 'OWCS' ? owWins(r, side) : r.sets.filter(s => s.winner === side).length);
 function result(r: Rec): 'WIN' | 'LOSS' | '' {
+  if (r.cat === 'OWCS') return owResult(r);
   const f = focusSide(r);
   if (!f) return '';
   const a = wins(r, f), b = wins(r, other(f));
@@ -266,6 +271,7 @@ function LiveInner() {
   const params = useSearchParams();
   const openId = params.get('r');
   const champs = useChamps();
+  const heroes = useHeroes();
   const [list, setList] = useState<Rec[]>([]);
   const [cat, setCat] = useState('LCK');
   const [form, setForm] = useState<Rec | null>(null);
@@ -288,7 +294,7 @@ function LiveInner() {
       </div>
 
       {open ? (
-        <LiveDetail r={open} champs={champs} onBack={() => router.push('/live')}
+        <LiveDetail r={open} champs={champs} heroes={heroes} onBack={() => router.push('/live')}
           onEdit={isAdmin ? () => setForm(structuredClone(open)) : undefined}
           onDelete={isAdmin ? () => { save(list.filter(x => x.id !== open.id)); router.push('/live'); } : undefined} />
       ) : (
@@ -302,7 +308,7 @@ function LiveInner() {
               ))}
             </div>
             {isAdmin && READY.includes(cat) && (
-              <button className="btn btn-dark" onClick={() => setForm({ ...emptyRec(), cat })}>＋ 직관 기록</button>
+              <button className="btn btn-dark" onClick={() => setForm({ ...emptyRec(), cat, ...(cat === 'OWCS' ? { focus: '', maps: [] } : {}) })}>＋ 직관 기록</button>
             )}
           </div>
           <div className="lv-cards">
@@ -325,7 +331,9 @@ function LiveInner() {
                     <span className="lv-pom">POM <b>{r.pom || '—'}</b></span>
                     <span className="lv-focus">
                       <small>{r.focus}</small>
-                      {focusChamps(r).map((c, i) => <ChampIcon key={i} name={c} size={26} champs={champs} />)}
+                      {r.cat === 'OWCS'
+                        ? owFocusHeroes(r).map((h, i) => <HeroIcon key={i} name={h} size={26} heroes={heroes} />)
+                        : focusChamps(r).map((c, i) => <ChampIcon key={i} name={c} size={26} champs={champs} />)}
                     </span>
                   </div>
                 </button>
@@ -351,15 +359,15 @@ function LiveInner() {
             router.push(`/live?r=${r.id}`);
           }}>SAVE</button>
         </>}>
-        {form && <LiveForm r={form} set={setForm} champs={champs} />}
+        {form && <LiveForm r={form} set={setForm} champs={champs} heroes={heroes} />}
       </Modal>
     </section>
   );
 }
 
 /* ---------- 상세 ---------- */
-function LiveDetail({ r, champs, onBack, onEdit, onDelete }: {
-  r: Rec; champs: Champs | null; onBack: () => void; onEdit?: () => void; onDelete?: () => void;
+function LiveDetail({ r, champs, heroes, onBack, onEdit, onDelete }: {
+  r: Rec; champs: Champs | null; heroes: Hero[]; onBack: () => void; onEdit?: () => void; onDelete?: () => void;
 }) {
   const [tab, setTab] = useState(0);   // 0..sets-1 = 세트, sets.length = 총평
   const del = useConfirmDelete();
@@ -380,7 +388,9 @@ function LiveDetail({ r, champs, onBack, onEdit, onDelete }: {
         </div>
         <div className="lv-head-foot">
           <span className="lv-pom">POM <b>{r.pom || '—'}</b></span>
-          <span className="lv-focus"><small>{r.focus}</small>{focusChamps(r).map((c, i) => <ChampIcon key={i} name={c} size={30} champs={champs} />)}</span>
+          <span className="lv-focus"><small>{r.focus}</small>{r.cat === 'OWCS'
+            ? owFocusHeroes(r).map((h, i) => <HeroIcon key={i} name={h} size={30} heroes={heroes} />)
+            : focusChamps(r).map((c, i) => <ChampIcon key={i} name={c} size={30} champs={champs} />)}</span>
         </div>
         {(onEdit || onDelete) && (
           <div className="lv-head-acts">
@@ -390,6 +400,16 @@ function LiveDetail({ r, champs, onBack, onEdit, onDelete }: {
         )}
       </div>
 
+      {r.cat === 'OWCS' ? (
+        <>
+          <OwBoard r={r} heroes={heroes} />
+          <div className="panel lv-review">
+            <p className="lv-review-pom">오늘의 POM · <b>{r.pom || '—'}</b></p>
+            <p className="lv-review-body">{r.review || '총평이 아직 없어요'}</p>
+          </div>
+        </>
+      ) : (
+        <>
       <div className="lv-tabs">
         {r.sets.map((s, i) => (
           <button key={i} className={tab === i ? 'on' : ''} onClick={() => setTab(i)}>
@@ -407,6 +427,8 @@ function LiveDetail({ r, champs, onBack, onEdit, onDelete }: {
             <p className="lv-review-body">{r.review || '총평이 아직 없어요'}</p>
           </div>
         )}
+        </>
+      )}
       {del.element}
     </div>
   );
@@ -478,7 +500,7 @@ function SetBoard({ r, s, no, champs }: { r: Rec; s: LSet; no: number; champs: C
 }
 
 /* ---------- 입력 폼 ---------- */
-function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: Champs | null }) {
+function LiveForm({ r, set, champs, heroes }: { r: Rec; set: (r: Rec) => void; champs: Champs | null; heroes: Hero[] }) {
   const [si, setSi] = useState(0);
   const up = (p: Partial<Rec>) => set({ ...r, ...p });
   const upSet = (i: number, fn: (s: LSet) => LSet) => up({ sets: r.sets.map((s, j) => (j === i ? fn(structuredClone(s)) : s)) });
@@ -498,6 +520,8 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
         <label>기준 선수<KInput value={r.focus} onChange={e => up({ focus: e.target.value })} /></label>
       </div>
 
+      {r.cat === 'OWCS' ? <OwForm r={r} up={up} heroes={heroes} /> : (
+        <>
       <div className="lv-f-teams">
         {(['A', 'B'] as Side[]).map(side => (
           <div key={side}>
@@ -599,9 +623,11 @@ function LiveForm({ r, set, champs }: { r: Rec; set: (r: Rec) => void; champs: C
         </div>
       )}
       {r.sets.length === 0 && <p className="hint">＋ 세트를 눌러 1세트부터 추가하세요 — 위에 적은 로스터가 선수 칸에 미리 들어가요</p>}
+        </>
+      )}
 
       <label className="lv-f-note">총평<KTextarea value={r.review} placeholder="오늘 경기 한 줄 평, 현장 분위기, 좋았던 순간…" onChange={e => up({ review: e.target.value })} /></label>
-      {champList === 0 && <p className="hint">챔피언 목록을 불러오는 중이에요</p>}
+      {r.cat !== 'OWCS' && champList === 0 && <p className="hint">챔피언 목록을 불러오는 중이에요</p>}
     </div>
   );
 }
