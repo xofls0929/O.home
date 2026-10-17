@@ -9,8 +9,8 @@ interface Prize { id: string; img: string; name: string; weight: number; shiny?:
 // 이브이 진화체 · 1~7세대 스타팅은 pokestats.gg의 5세대(블랙·화이트) 움직이는 스프라이트
 /** 이로치 한 마리 무게 — 한 마리가 정확히 1% 나오게.
  *  일반 n종(무게 1) + 이로치 m종(무게 w)일 때 w / (n + m·w) = 0.01 → w = 0.01·n / (1 − 0.01·m).
- *  지금 일반 45종 · 이로치 4종 → w = 0.46875. 포켓몬을 추가하면 아래 숫자만 맞추면 된다 */
-const NORMAL_N = 45, SHINY_N = 4;
+ *  지금 일반 87종 · 이로치 4종. 포켓몬을 추가하면 아래 숫자만 맞추면 된다 */
+const NORMAL_N = 87, SHINY_N = 4;
 const SHINY_W = (0.01 * NORMAL_N) / (1 - 0.01 * SHINY_N);
 const PRIZES: Prize[] = [
   { id: 'pachirisu', img: '/deco/gacha/pachirisu.gif', name: '파치리스', weight: 1 },
@@ -46,6 +46,49 @@ const PRIZES: Prize[] = [
   { id: 'rowlet', img: '/deco/gacha/rowlet.gif', name: '나몰빼', weight: 1 },
   { id: 'litten', img: '/deco/gacha/litten.gif', name: '냐오불', weight: 1 },
   { id: 'popplio', img: '/deco/gacha/popplio.gif', name: '누리공', weight: 1 },
+  // 1~7세대 스타팅 진화형
+  { id: 'ivysaur', img: '/deco/gacha/ivysaur.gif', name: '이상해풀', weight: 1 },
+  { id: 'venusaur', img: '/deco/gacha/venusaur.gif', name: '이상해꽃', weight: 1 },
+  { id: 'charmeleon', img: '/deco/gacha/charmeleon.gif', name: '리자드', weight: 1 },
+  { id: 'charizard', img: '/deco/gacha/charizard.gif', name: '리자몽', weight: 1 },
+  { id: 'wartortle', img: '/deco/gacha/wartortle.gif', name: '어니부기', weight: 1 },
+  { id: 'blastoise', img: '/deco/gacha/blastoise.gif', name: '거북왕', weight: 1 },
+  { id: 'bayleef', img: '/deco/gacha/bayleef.gif', name: '베이리프', weight: 1 },
+  { id: 'meganium', img: '/deco/gacha/meganium.gif', name: '메가니움', weight: 1 },
+  { id: 'quilava', img: '/deco/gacha/quilava.gif', name: '마그케인', weight: 1 },
+  { id: 'typhlosion', img: '/deco/gacha/typhlosion.gif', name: '블레이범', weight: 1 },
+  { id: 'croconaw', img: '/deco/gacha/croconaw.gif', name: '엘리게이', weight: 1 },
+  { id: 'feraligatr', img: '/deco/gacha/feraligatr.gif', name: '장크로다일', weight: 1 },
+  { id: 'grovyle', img: '/deco/gacha/grovyle.gif', name: '나무돌이', weight: 1 },
+  { id: 'sceptile', img: '/deco/gacha/sceptile.gif', name: '나무킹', weight: 1 },
+  { id: 'combusken', img: '/deco/gacha/combusken.gif', name: '영치코', weight: 1 },
+  { id: 'blaziken', img: '/deco/gacha/blaziken.gif', name: '번치코', weight: 1 },
+  { id: 'marshtomp', img: '/deco/gacha/marshtomp.gif', name: '늪짱이', weight: 1 },
+  { id: 'swampert', img: '/deco/gacha/swampert.gif', name: '대짱이', weight: 1 },
+  { id: 'grotle', img: '/deco/gacha/grotle.gif', name: '수풀부기', weight: 1 },
+  { id: 'torterra', img: '/deco/gacha/torterra.gif', name: '토대부기', weight: 1 },
+  { id: 'monferno', img: '/deco/gacha/monferno.gif', name: '파이숭이', weight: 1 },
+  { id: 'infernape', img: '/deco/gacha/infernape.gif', name: '초염몽', weight: 1 },
+  { id: 'prinplup', img: '/deco/gacha/prinplup.gif', name: '팽태자', weight: 1 },
+  { id: 'empoleon', img: '/deco/gacha/empoleon.gif', name: '엠페르트', weight: 1 },
+  { id: 'servine', img: '/deco/gacha/servine.gif', name: '샤비', weight: 1 },
+  { id: 'serperior', img: '/deco/gacha/serperior.gif', name: '샤로다', weight: 1 },
+  { id: 'pignite', img: '/deco/gacha/pignite.gif', name: '차오꿀', weight: 1 },
+  { id: 'emboar', img: '/deco/gacha/emboar.gif', name: '염무왕', weight: 1 },
+  { id: 'dewott', img: '/deco/gacha/dewott.gif', name: '쌍검자비', weight: 1 },
+  { id: 'samurott', img: '/deco/gacha/samurott.gif', name: '대검귀', weight: 1 },
+  { id: 'quilladin', img: '/deco/gacha/quilladin.gif', name: '고슴포고', weight: 1 },
+  { id: 'chesnaught', img: '/deco/gacha/chesnaught.gif', name: '브리가론', weight: 1 },
+  { id: 'braixen', img: '/deco/gacha/braixen.gif', name: '테르나', weight: 1 },
+  { id: 'delphox', img: '/deco/gacha/delphox.gif', name: '마폭시', weight: 1 },
+  { id: 'frogadier', img: '/deco/gacha/frogadier.gif', name: '개굴반장', weight: 1 },
+  { id: 'greninja', img: '/deco/gacha/greninja.gif', name: '개굴닌자', weight: 1 },
+  { id: 'dartrix', img: '/deco/gacha/dartrix.gif', name: '빼미스로우', weight: 1 },
+  { id: 'decidueye', img: '/deco/gacha/decidueye.gif', name: '모크나이퍼', weight: 1 },
+  { id: 'torracat', img: '/deco/gacha/torracat.gif', name: '냐오히트', weight: 1 },
+  { id: 'incineroar', img: '/deco/gacha/incineroar.gif', name: '어흥염', weight: 1 },
+  { id: 'brionne', img: '/deco/gacha/brionne.gif', name: '키요공', weight: 1 },
+  { id: 'primarina', img: '/deco/gacha/primarina.gif', name: '누리레느', weight: 1 },
   { id: 'emolga', img: '/deco/gacha/emolga.gif', name: '에몽가', weight: 1 },
   { id: 'buneary', img: '/deco/gacha/buneary.gif', name: '이어롤', weight: 1 },
   { id: 'lopunny', img: '/deco/gacha/lopunny.gif', name: '이어롭', weight: 1 },
