@@ -38,9 +38,22 @@ const PRIZES: Prize[] = [
   { id: 'chespin', img: '/deco/gacha/chespin.gif', name: '도치마론', weight: 1 },
   { id: 'fennekin', img: '/deco/gacha/fennekin.gif', name: '푸호꼬', weight: 1 },
   { id: 'froakie', img: '/deco/gacha/froakie.gif', name: '개구마르', weight: 1 },
+  { id: 'emolga', img: '/deco/gacha/emolga.gif', name: '에몽가', weight: 1 },
+  { id: 'buneary', img: '/deco/gacha/buneary.gif', name: '이어롤', weight: 1 },
+  { id: 'lopunny', img: '/deco/gacha/lopunny.gif', name: '이어롭', weight: 1 },
+  { id: 'pichu', img: '/deco/gacha/pichu.gif', name: '피츄', weight: 1 },
+  { id: 'jigglypuff', img: '/deco/gacha/jigglypuff.gif', name: '푸린', weight: 1 },
+  { id: 'psyduck', img: '/deco/gacha/psyduck.gif', name: '고라파덕', weight: 1 },
+  { id: 'togepi', img: '/deco/gacha/togepi.gif', name: '토게피', weight: 1 },
+  { id: 'marill', img: '/deco/gacha/marill.gif', name: '마릴', weight: 1 },
+  { id: 'wooper', img: '/deco/gacha/wooper.gif', name: '우파', weight: 1 },
+  { id: 'plusle', img: '/deco/gacha/plusle.gif', name: '플러시', weight: 1 },
+  { id: 'minun', img: '/deco/gacha/minun.gif', name: '마이농', weight: 1 },
+  { id: 'riolu', img: '/deco/gacha/riolu.gif', name: '리오르', weight: 1 },
   // 이로치 — 일반의 1/4 확률
   { id: 'eevee-shiny', img: '/deco/gacha/eevee-shiny.gif', name: '이브이', weight: 0.25, shiny: true },
   { id: 'pachirisu-shiny', img: '/deco/gacha/pachirisu-shiny.gif', name: '파치리스', weight: 0.25, shiny: true },
+  { id: 'skitty-shiny', img: '/deco/gacha/skitty-shiny.gif', name: '에나비', weight: 0.25, shiny: true },
 ];
 const MACHINE = '/deco/gacha/machine.png';
 const TURN_GIF = '/deco/gacha/machine-turn.gif';   // 한 번만 재생 — 다이얼이 돌고 볼이 오른쪽 아래로 굴러 나온다
