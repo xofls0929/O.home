@@ -7,6 +7,11 @@ import { useMainStore } from '@/lib/mainStore';
 interface Prize { id: string; img: string; name: string; weight: number; shiny?: boolean }
 // 포켓몬을 늘리려면 public/deco/gacha/ 에 GIF를 넣고 여기에 한 줄 추가
 // 이브이 진화체 · 1~7세대 스타팅은 pokestats.gg의 5세대(블랙·화이트) 움직이는 스프라이트
+/** 이로치 한 마리 무게 — 한 마리가 정확히 1% 나오게.
+ *  일반 n종(무게 1) + 이로치 m종(무게 w)일 때 w / (n + m·w) = 0.01 → w = 0.01·n / (1 − 0.01·m).
+ *  지금 일반 45종 · 이로치 4종 → w = 0.46875. 포켓몬을 추가하면 아래 숫자만 맞추면 된다 */
+const NORMAL_N = 45, SHINY_N = 4;
+const SHINY_W = (0.01 * NORMAL_N) / (1 - 0.01 * SHINY_N);
 const PRIZES: Prize[] = [
   { id: 'pachirisu', img: '/deco/gacha/pachirisu.gif', name: '파치리스', weight: 1 },
   { id: 'skitty', img: '/deco/gacha/skitty.gif', name: '에나비', weight: 1 },
@@ -53,11 +58,11 @@ const PRIZES: Prize[] = [
   { id: 'plusle', img: '/deco/gacha/plusle.gif', name: '플러시', weight: 1 },
   { id: 'minun', img: '/deco/gacha/minun.gif', name: '마이농', weight: 1 },
   { id: 'riolu', img: '/deco/gacha/riolu.gif', name: '리오르', weight: 1 },
-  // 이로치 — 일반의 1/4 확률
-  { id: 'eevee-shiny', img: '/deco/gacha/eevee-shiny.gif', name: '이브이', weight: 0.25, shiny: true },
-  { id: 'pachirisu-shiny', img: '/deco/gacha/pachirisu-shiny.gif', name: '파치리스', weight: 0.25, shiny: true },
-  { id: 'skitty-shiny', img: '/deco/gacha/skitty-shiny.gif', name: '에나비', weight: 0.25, shiny: true },
-  { id: 'emolga-shiny', img: '/deco/gacha/emolga-shiny.gif', name: '에몽가', weight: 0.25, shiny: true },
+  // 이로치 — 한 마리당 1% (아래 SHINY_W)
+  { id: 'eevee-shiny', img: '/deco/gacha/eevee-shiny.gif', name: '이브이', weight: SHINY_W, shiny: true },
+  { id: 'pachirisu-shiny', img: '/deco/gacha/pachirisu-shiny.gif', name: '파치리스', weight: SHINY_W, shiny: true },
+  { id: 'skitty-shiny', img: '/deco/gacha/skitty-shiny.gif', name: '에나비', weight: SHINY_W, shiny: true },
+  { id: 'emolga-shiny', img: '/deco/gacha/emolga-shiny.gif', name: '에몽가', weight: SHINY_W, shiny: true },
 ];
 const MACHINE = '/deco/gacha/machine.png';
 const TURN_GIF = '/deco/gacha/machine-turn.gif';   // 한 번만 재생 — 다이얼이 돌고 볼이 오른쪽 아래로 굴러 나온다
